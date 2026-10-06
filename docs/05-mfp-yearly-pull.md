@@ -61,7 +61,8 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 ## Decisions (Lynwood, October 2026)
 
 - **Braided Pastry** in MFP is the planner's **Butter Braid Pastry**.
-- **Combo** is its own program. **Batavia Music Buffs** is its own program too; it runs all products, and MFP names it by year.
+- **Combo** is its own program.
+- **Batavia Music Buffs** is a single group that runs all products. MFP names it as a program by year, but it is **not** a planner program (Lynwood, Oct 2026). Its units are planned under an existing program; see `PROGRAMS` in the baseline script.
 - **Current reps:** BPR, JK, JMK, KJP, KJS, RB. Rollups: BLS → KJS, LBS → KJP, LMD → JMK.
 - **A group's history moves to its current rep**, meaning the owner of its most recent counted fundraiser. Groups last owned by anyone else (BJS, GLP, LSS) go to the current rep with the most groups in the same city, or failing that the same county. See *Group locations* below.
 - **Open fundraisers count if they were invoiced** (units sold). Open bookings with nothing sold are left out, and so are canceled fundraisers.

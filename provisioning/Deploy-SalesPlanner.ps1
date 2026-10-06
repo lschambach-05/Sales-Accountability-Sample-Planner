@@ -53,8 +53,7 @@ param(
         'Wooden Spoon CD',
         'Joyful Tradition',
         'Bella Napoli',
-        'Croissant Crowns',
-        'Batavia Music Buffs'
+        'Croissant Crowns'
     )
 )
 
