@@ -57,9 +57,10 @@ ClearCollect(colMyDays,
 
 // Last 12 months of activity, across seasons, for realistic close rates
 // (a spring call can book a fall group)
-ClearCollect(colMyYear,
-    Filter('Daily Activity', 'Created By'.Email = User().Email &&
-        'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
+// Fetch the rep's rows, then filter dates inside the app (a date filter sent to
+// SharePoint returned nothing on the live site, October 2026)
+ClearCollect(colMyAll, Filter('Daily Activity', 'Created By'.Email = User().Email));
+ClearCollect(colMyYear, Filter(colMyAll, 'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
 Set(varDirClose12, IfError(Sum(colMyYear, 'New Groups Booked - In-Person') / Sum(colMyYear, 'In-Person Calls'), 0));
 Set(varIndClose12, IfError(Sum(colMyYear, 'New Groups Booked - Gatekeeper') / Sum(colMyYear, 'Gatekeeper Contacts'), 0));
 
@@ -84,7 +85,8 @@ Set(varDaysLeft, Max(1, Coalesce(varSeason.'Sales Days Goal', 0) - varSalesDays)
 If(varIsManager,
     ClearCollect(colAllPlans, Filter('Program Plans',  Season.Id = varSeason.ID));
     ClearCollect(colAllDays,  Filter('Daily Activity', Season.Id = varSeason.ID));
-    ClearCollect(colAllYear,  Filter('Daily Activity', 'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
+    ClearCollect(colAllRows,  'Daily Activity');
+    ClearCollect(colAllYear,  Filter(colAllRows, 'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
     ClearCollect(colReps,     Filter(Reps, Active = true))
 );
 ```
