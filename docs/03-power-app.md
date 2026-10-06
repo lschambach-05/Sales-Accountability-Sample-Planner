@@ -182,19 +182,26 @@ If(
 
 ## 4. scrPlan – My Plan
 
-1. **Gallery** `galPlans`, Items `colMyPlans`. Show in each row:
-   - `ThisItem.Program.Value`
-   - `"Goal " & ThisItem.'Sales Goal Units' & " · " & RoundUp(ThisItem.'Plan - New Groups Needed', 0) & " new groups needed"`
-   - `"Target: " & ThisItem.'In-Person Calls Target' & " in-person calls · " & ThisItem.'Gatekeeper Contacts Target' & " gatekeeper contacts"`
+1. **Gallery** `galPlans`, Items `colMyPlans`, **OnSelect** `EditForm(frmPlan)`. Calculated columns come back as long decimals, so wrap them in `Text(Value(...))`:
+   - Title: `ThisItem.Program.Value & " · goal " & Text(Value(ThisItem.'Sales Goal Units'), "#,##0")`
+   - Subtitle: `"Target: " & Text(Value(ThisItem.'In-Person Calls Target'), "0") & " in-person · " & Text(Value(ThisItem.'Gatekeeper Contacts Target'), "0") & " gatekeeper"`
 2. **Edit form** `frmPlan`: DataSource `'Program Plans'`, Item `galPlans.Selected`. Fields, in this order:
    - Season, Program
    - Prior Year Units, Prior Year Groups
    - Growth Goal %, Goal Units Override
    - Retention %, Avg Units per New Group
    - % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %
+
+   Set the form's **X** to 0 and **Width** to 640, with 1 column, so the boxes fit on a phone screen.
+
+   **Program dropdown** (the combo box in the Program card, e.g. `DataCardValue1`). In the live build, the choices list came up empty, so use a fixed list:
+   - **Items:** `Table({Value: "Butter Braid Pastry"}, {Value: "Combo"}, {Value: "Wooden Spoon CD"}, {Value: "Joyful Tradition"}, {Value: "Bella Napoli"}, {Value: "Croissant Crowns"})`
+   - **DisplayFields** and **SearchFields:** `["Value"]`
+   - The Program card's **Update:** `DataCardValue1.Selected`
+   - **DisplayMode:** `If(frmPlan.Mode = FormMode.New, DisplayMode.Edit, DisplayMode.View)`. This stops a rep from turning an existing row into a different program by mistake. To switch programs, add a new row.
 3. **Season card:** set the card's **Update** to `{ Id: varSeason.ID, Value: varSeason.Season }` and **Visible** to `false`. The rep never picks a season; it's always the one on the scorecard.
 4. **Percent cards** (Growth Goal %, Retention %, % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
-   - The text input's **Default**: `Parent.Default * 100`
+   - The text input's **Default**: `If(IsBlank(Parent.Default), "", Parent.Default * 100)`. With plain `Parent.Default * 100`, a new row starts at 0 instead of blank.
    - The card's **Update**: `Value(<that text input>.Text) / 100`
 5. **Live preview under the form**, so the rep sees the calls needed before saving. Add a label with **Text**:
 
@@ -217,7 +224,7 @@ If(
    ```
 
    Replace each `<… input>` with the control name Power Apps gave that field's text box (for example `DataCardValue5`).
-6. **"Add program" button:** `NewForm(frmPlan)`
+6. **"Add program" button:** `NewForm(frmPlan)`. Tapping a row in the gallery switches back to editing that row.
 7. **Save button:** this blocks a second row for the same program and season:
 
    ```powerfx
@@ -226,6 +233,8 @@ If(
        Notify("You already have a plan for that program this season. Select it to edit.", NotificationType.Warning),
        SubmitForm(frmPlan))
    ```
+
+   Save button **Text**: `If(frmPlan.Mode = FormMode.New, "Add this program", "Save changes")`. This shows the rep whether they're adding a row or changing one.
 
 8. **frmPlan.OnSuccess:** `Refresh('Program Plans'); ClearCollect(colMyPlans, Filter('Program Plans', Season.Id = varSeason.ID && 'Created By'.Email = User().Email)); Notify("Plan saved", NotificationType.Success)`
 9. **Header totals:** `"Season goal " & Sum(colMyPlans, 'Sales Goal Units') & " · " & Sum(colMyPlans, 'In-Person Calls Target') & " in-person calls · " & Sum(colMyPlans, 'Gatekeeper Contacts Target') & " gatekeeper contacts"`
