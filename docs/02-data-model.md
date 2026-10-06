@@ -48,8 +48,8 @@ The old workbook's actuals section divided retained units by **this** season's t
 | Column | Type | Notes |
 |---|---|---|
 | Season | Text | For example "2027 Fall". Shown in every dropdown |
-| Season Start (Monday) | Date | Week 1 starts here |
-| Weeks | Number | Default 20. Used for pace (goal × week ÷ weeks) |
+| Season Start | Date | **Jan 1** for Spring, **Jul 1** for Fall (the same split as the MFP numbers). Week 1 ends on the first Friday on or after this date |
+| Weeks | Number | Number of Fridays (check-in days) in the season, usually 26, sometimes 27. Used for pace (goal × week ÷ weeks) |
 | Sales Days Goal | Number | The workbook had this per rep. It's now one target per season. If you want it per rep again, it can move to the Reps list |
 | Current Season | Yes/No | The app opens on this season |
 | Retention Rule | Choice | Which rule counted this season's retained groups (default: any program, either season last year) |
@@ -128,7 +128,7 @@ All divisions return 0 instead of an error when the bottom number is 0.
 
 **In-season scorecard math** (done in the app):
 
-- Current week = weeks since Season Start + 1 (never more than Weeks)
+- Current week = the week whose Friday is today or next, counting from the first Friday on or after Season Start (never more than Weeks)
 - Pace for any goal = goal × current week ÷ Weeks (same straight-line pace as the workbook)
 - Units to date = MFP Units Season-to-Date from the most recent check-in
 - Calls / contacts / sales days = sums of the season's check-ins

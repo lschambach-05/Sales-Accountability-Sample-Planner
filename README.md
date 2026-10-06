@@ -47,7 +47,7 @@ Times are estimates, not measurements.
 
 ## Every season (managers, 5 minutes)
 
-1. **Seasons** list → **+ New**: name (for example "2028 Spring"), start Monday, weeks (20), sales days goal, and retention rule (leave the default unless you've decided to change it).
+1. **Seasons** list → **+ New**: name (for example "2028 Spring"), start date (Jan 1 for Spring, Jul 1 for Fall), weeks (the number of Fridays in the season, usually 26), sales days goal, and retention rule (leave the default unless you've decided to change it).
 2. Untick **Current Season** on the old season and tick it on the new one.
 3. Tell reps to open **My Plan** in the app and add one row per program they're selling.
 4. After the season: reps fill in **Season Results**. Managers review the **Plan vs Actual** view in the Program Plans list.

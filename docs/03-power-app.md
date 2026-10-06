@@ -37,7 +37,7 @@ Set(varIsManager, Lower(User().Email) in varManagers);
 
 Set(varSeason, Coalesce(
     First(Filter(Seasons, 'Current Season' = true)),
-    First(Sort(Seasons, 'Season Start (Monday)', SortOrder.Descending))
+    First(Sort(Seasons, 'Season Start', SortOrder.Descending))
 ));
 ```
 
@@ -53,9 +53,15 @@ ClearCollect(colMyCheckins,
         Filter('Weekly Check-ins', Season.Id = varSeason.ID && 'Created By'.Email = User().Email),
         'Week Ending (Friday)', SortOrder.Descending));
 
-// Current week of the season (0 before it starts, capped at the last week)
-Set(varWeekNow, Max(0, Min(varSeason.Weeks,
-    RoundDown(DateDiff(varSeason.'Season Start (Monday)', Today(), TimeUnit.Days) / 7, 0) + 1)));
+// Seasons start Jan 1 / Jul 1, which can be any weekday. Check-ins are due on Fridays,
+// so week 1 ends on the first Friday on or after the season start.
+Set(varFirstFriday, DateAdd(varSeason.'Season Start',
+    Mod(6 - Weekday(varSeason.'Season Start'), 7), TimeUnit.Days));
+
+// Current week of the season: 0 before it starts, the week whose Friday is today or next, capped at the last week
+Set(varWeekNow, If(Today() < varSeason.'Season Start', 0,
+    Max(1, Min(varSeason.Weeks,
+        RoundUp(DateDiff(varFirstFriday, Today(), TimeUnit.Days) / 7, 0) + 1))));
 
 If(varIsManager,
     ClearCollect(colAllPlans,    Filter('Program Plans',    Season.Id = varSeason.ID));
@@ -67,7 +73,7 @@ If(varIsManager,
 **scrHome.OnVisible:** `Select(btnLoad)`
 
 **Season dropdown** (`ddSeason`):
-- Items: `Sort(Seasons, 'Season Start (Monday)', SortOrder.Descending)`
+- Items: `Sort(Seasons, 'Season Start', SortOrder.Descending)`
 - Value (field shown): `Season`
 - Default: `varSeason.Season`
 - OnChange: `Set(varSeason, ddSeason.Selected); Select(btnLoad)`
@@ -96,7 +102,7 @@ With({ actual: Sum(colMyCheckins, 'Direct Calls'),
 ```powerfx
 Filter(
     ForAll(Sequence(Max(varWeekNow - 1, 0)) As w,
-        { Due: DateAdd(varSeason.'Season Start (Monday)', (w.Value - 1) * 7 + 4, TimeUnit.Days) }
+        { Due: DateAdd(varFirstFriday, (w.Value - 1) * 7, TimeUnit.Days) }
     ) As f,
     IsBlank(LookUp(colMyCheckins, DateDiff('Week Ending (Friday)', f.Due, TimeUnit.Days) = 0))
 )

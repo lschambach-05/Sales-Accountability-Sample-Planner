@@ -190,7 +190,7 @@ Add-FieldXml 'Seasons' 'RetentionRule' ('<Field Type="Choice" Name="RetentionRul
     '</CHOICES></Field>')
 Rename-Fields 'Seasons' @{
     Title         = 'Season'
-    SeasonStart   = 'Season Start (Monday)'
+    SeasonStart   = 'Season Start'
     Weeks         = 'Weeks'
     SalesDaysGoal = 'Sales Days Goal'
     CurrentSeason = 'Current Season'
@@ -199,8 +199,10 @@ Rename-Fields 'Seasons' @{
 Set-PnPView -List 'Seasons' -Identity 'All Items' -Fields 'LinkTitle', 'SeasonStart', 'Weeks', 'SalesDaysGoal', 'CurrentSeason', 'RetentionRule' | Out-Null
 
 if (-not (Get-PnPListItem -List 'Seasons' -PageSize 50)) {
-    Add-PnPListItem -List 'Seasons' -Values @{ Title = '2027 Spring'; SeasonStart = [datetime]'2027-01-04'; Weeks = 20 } | Out-Null
-    Add-PnPListItem -List 'Seasons' -Values @{ Title = '2027 Fall';   SeasonStart = [datetime]'2027-08-09'; Weeks = 20 } | Out-Null
+    # Spring = Jan 1 - Jun 30, Fall = Jul 1 - Dec 31 (same split as the MFP delivery-date seasons).
+    # Weeks = number of Fridays (check-in days) in the season.
+    Add-PnPListItem -List 'Seasons' -Values @{ Title = '2027 Spring'; SeasonStart = [datetime]'2027-01-01'; Weeks = 26 } | Out-Null
+    Add-PnPListItem -List 'Seasons' -Values @{ Title = '2027 Fall';   SeasonStart = [datetime]'2027-07-01'; Weeks = 27 } | Out-Null
     Write-Host '   seeded 2027 Spring and 2027 Fall'
 }
 

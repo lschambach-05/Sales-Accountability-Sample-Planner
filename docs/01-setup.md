@@ -54,7 +54,7 @@ The script:
 |---|---|---|
 | Group **Sales Planner Managers** (Full Control) | You + the second manager | n/a |
 | Group **Sales Planner Reps** (Contribute) | The 6 reps | n/a |
-| **Seasons** list | Season name, start Monday, number of weeks, sales-days goal, which season is current | Managers edit; reps read only |
+| **Seasons** list | Season name, start date (Jan 1 or Jul 1), number of weeks, sales-days goal, which season is current | Managers edit; reps read only |
 | **Reps** list | Roster: name, MFP Owning User code, active? | Managers only |
 | **Program Plans** list | Each rep's pre-season plan per program, plus post-season actuals | Each rep: only their own rows. Managers: all |
 | **Weekly Check-ins** list | Each rep's Friday numbers | Each rep: only their own rows. Managers: all |
@@ -67,7 +67,7 @@ It's safe to run again (for example, to add a new rep). Anything that already ex
 
 1. **Reps** list: for each rep, replace the email in *Rep Name* with their name and fill in their **MFP Owning User Code** (for example BLS, KJS).
 2. **Seasons** list:
-   - The script adds **2027 Spring** (starts Mon Jan 4, 2027) and **2027 Fall** (starts Mon Aug 9, 2027), 20 weeks each, matching the old workbook.
+   - The script adds **2027 Spring** (Jan 1, 2027, 26 weeks) and **2027 Fall** (Jul 1, 2027, 27 weeks). Seasons run Jan 1 – Jun 30 and Jul 1 – Dec 31, matching the MFP numbers. Weeks = the number of Fridays in the season.
    - Fill in the **Sales Days Goal** for each season.
    - Tick **Current Season** on the one in progress. To pilot it now, add a **2026 Fall** row with its real start date.
 
