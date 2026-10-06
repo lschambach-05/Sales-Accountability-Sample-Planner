@@ -44,6 +44,7 @@ param(
     [string[]] $RepEmails = @(),
     [string[]] $Programs = @(
         'Butter Braid Pastry',
+        'Combo',
         'Wooden Spoon CD',
         'Joyful Tradition',
         'Bella Napoli',
