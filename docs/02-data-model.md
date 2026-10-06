@@ -19,12 +19,23 @@ This page shows how the old **Accountable Sales Planning Tool** workbook maps on
 3. **Two different goals:** the Dashboard used *Sales Goal Units* while the Annual Summary used *Projected Total Units*. Now **Sales Goal Units is the target** everywhere. Projected Units is shown as "Plan – % of Goal Covered", a check on whether the activity plan adds up to the goal.
 4. The hidden **Metrics** tab was all `#REF!` errors. It's gone.
 
-### One definition changed: retention
+### Retention: one definition everywhere
 
-- In the workbook's **plan** section, *Retention %* = retained units ÷ **prior** season units.
-- In its **actuals** section, *Unit Retention %* = retained units ÷ **this** season's total units.
+**A group is retained if it ran the previous year.** "Previous year" means the same season one year earlier:
 
-That's a different measure under the same name, so plan vs actual retention wasn't comparable. The new **Actual – Retention % of Prior** uses the same definition as the plan (retained ÷ prior). If you'd rather keep the old actuals definition as well, it's a one-column addition.
+| Plan / results for | Prior-year numbers come from |
+|---|---|
+| 2025 Fall | 2024 Fall |
+| 2026 Spring | 2025 Spring |
+| 2026 Fall | 2025 Fall |
+
+- **Prior Year Units / Prior Year Groups:** that rep's units and number of groups for the program in the same season last year.
+- **Retained Units:** units this season from groups that also ran last year.
+- **Retained Groups:** number of groups that ran last year *and* this year.
+- **Unit Retention %** = Retained Units ÷ Prior Year Units. This is the plan's *Retention %* and the actual result.
+- **Group Retention %** = Retained Groups ÷ Prior Year Groups ("18 of last year's 25 groups came back").
+
+The old workbook's actuals section divided retained units by **this** season's total units. That isn't comparable with the plan, so it's been replaced by the definitions above.
 
 ---
 
@@ -57,7 +68,8 @@ The rep is whoever **created** the row ("Created By"). That's also what item-lev
 |---|---|
 | Season, Program | row 4–5 |
 | Sales Goal Units | row 6 |
-| Prior Sales Units | row 7 |
+| Prior Year Units | row 7 (same season last year) |
+| Prior Year Groups | new: number of groups last year |
 | Retention % | row 8 |
 | Direct Calls Goal | row 10 |
 | Direct Close % | row 11 |
@@ -77,14 +89,15 @@ The rep is whoever **created** the row ("Created By"). That's also what item-lev
 | Plan – Projected Total Units | Retained + New Units | 19 |
 | Plan – % of Goal Covered | Projected ÷ Sales Goal Units | 20 |
 
-**Post-season inputs:** Actual – Total Units, Retained Units, Retained Groups, Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings (workbook rows 22–24, 28–29, 31–32).
+**Post-season inputs:** Actual – Total Units, Retained Units (ran last year), Retained Groups (ran last year), Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings (workbook rows 22–24, 28–29, 31–32).
 
 **Post-season calculated:**
 
 | Column | Formula |
 |---|---|
 | Actual – Attainment % | Actual Total ÷ Sales Goal Units |
-| Actual – Retention % of Prior | Actual Retained ÷ Prior Sales Units |
+| Actual – Unit Retention % | Actual Retained Units ÷ Prior Year Units |
+| Actual – Group Retention % | Actual Retained Groups ÷ Prior Year Groups |
 | Actual – New Units | Total − Retained |
 | Actual – New Groups | Direct + Indirect bookings |
 | Actual – Direct / Indirect Close % | Bookings ÷ calls (or contacts) |

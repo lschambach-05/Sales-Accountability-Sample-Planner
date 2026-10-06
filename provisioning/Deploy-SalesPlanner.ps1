@@ -238,9 +238,12 @@ $choices = ($Programs | ForEach-Object { '<CHOICE>' + [System.Security.SecurityE
 Add-FieldXml $PP 'Season'  "<Field Type=""Lookup"" Name=""Season"" StaticName=""Season"" DisplayName=""Season"" List=""{$seasonsId}"" ShowField=""Title"" Required=""TRUE"" />"
 Add-FieldXml $PP 'Program' "<Field Type=""Choice"" Name=""Program"" StaticName=""Program"" DisplayName=""Program"" Format=""Dropdown"" Required=""TRUE""><CHOICES>$choices</CHOICES></Field>"
 
-# Pre-season plan inputs (yellow cells on the old Goals tabs)
+# Pre-season plan inputs (yellow cells on the old Goals tabs).
+# "Prior year" = the same season one year earlier (a 2026 Fall plan uses 2025 Fall numbers).
+# A group is "retained" if it ran the previous year.
 Add-NumberField $PP 'GoalUnits'
 Add-NumberField $PP 'PriorUnits'
+Add-NumberField $PP 'PriorGroups'
 Add-NumberField $PP 'RetentionPct'         -Decimals 1 -Percent
 Add-NumberField $PP 'DirectCallsGoal'
 Add-NumberField $PP 'DirectClosePct'       -Decimals 1 -Percent
@@ -271,6 +274,7 @@ Add-NumberField $PP 'ActIndirectBookings'
 
 Add-CalcField $PP 'ActAttainment'       '=IF([GoalUnits]=0,0,[ActTotalUnits]/[GoalUnits])'                 @('GoalUnits', 'ActTotalUnits') -Decimals 1 -Percent
 Add-CalcField $PP 'ActRetentionPct'     '=IF([PriorUnits]=0,0,[ActRetainedUnits]/[PriorUnits])'            @('PriorUnits', 'ActRetainedUnits') -Decimals 1 -Percent
+Add-CalcField $PP 'ActGroupRetentionPct' '=IF([PriorGroups]=0,0,[ActRetainedGroups]/[PriorGroups])'          @('PriorGroups', 'ActRetainedGroups') -Decimals 1 -Percent
 Add-CalcField $PP 'ActNewUnits'         '=[ActTotalUnits]-[ActRetainedUnits]'                              @('ActTotalUnits', 'ActRetainedUnits')
 Add-CalcField $PP 'ActNewGroups'        '=[ActDirectBookings]+[ActIndirectBookings]'                       @('ActDirectBookings', 'ActIndirectBookings')
 Add-CalcField $PP 'ActDirectClosePct'   '=IF([ActDirectCalls]=0,0,[ActDirectBookings]/[ActDirectCalls])'   @('ActDirectCalls', 'ActDirectBookings') -Decimals 1 -Percent
@@ -281,7 +285,8 @@ Add-CalcField $PP 'ActRetainedGroupAvg' '=IF([ActRetainedGroups]=0,0,[ActRetaine
 Rename-Fields $PP @{
     Title                = 'Notes'
     GoalUnits            = 'Sales Goal Units'
-    PriorUnits           = 'Prior Sales Units'
+    PriorUnits           = 'Prior Year Units'
+    PriorGroups          = 'Prior Year Groups'
     RetentionPct         = 'Retention %'
     DirectCallsGoal      = 'Direct Calls Goal'
     DirectClosePct       = 'Direct Close %'
@@ -296,14 +301,15 @@ Rename-Fields $PP @{
     PlanTotalUnits       = 'Plan - Projected Total Units'
     PlanCoverage         = 'Plan - % of Goal Covered'
     ActTotalUnits        = 'Actual - Total Units'
-    ActRetainedUnits     = 'Actual - Retained Units'
-    ActRetainedGroups    = 'Actual - Retained Groups'
+    ActRetainedUnits     = 'Actual - Retained Units (ran last year)'
+    ActRetainedGroups    = 'Actual - Retained Groups (ran last year)'
     ActDirectCalls       = 'Actual - Direct Calls'
     ActDirectBookings    = 'Actual - Direct Bookings'
     ActIndirectContacts  = 'Actual - Indirect Contacts'
     ActIndirectBookings  = 'Actual - Indirect Bookings'
     ActAttainment        = 'Actual - Attainment %'
-    ActRetentionPct      = 'Actual - Retention % of Prior'
+    ActRetentionPct      = 'Actual - Unit Retention %'
+    ActGroupRetentionPct = 'Actual - Group Retention %'
     ActNewUnits          = 'Actual - New Units'
     ActNewGroups         = 'Actual - New Groups'
     ActDirectClosePct    = 'Actual - Direct Close %'
@@ -312,14 +318,14 @@ Rename-Fields $PP @{
     ActRetainedGroupAvg  = 'Actual - Avg Units per Retained Group'
 }
 
-$planFields = 'Season', 'Program', 'GoalUnits', 'PriorUnits', 'RetentionPct', 'DirectCallsGoal', 'DirectClosePct',
+$planFields = 'Season', 'Program', 'GoalUnits', 'PriorUnits', 'PriorGroups', 'RetentionPct', 'DirectCallsGoal', 'DirectClosePct',
               'IndirectContactsGoal', 'IndirectClosePct', 'AvgUnitsPerGroup', 'PlanNewGroups', 'PlanTotalUnits', 'PlanCoverage'
 Set-PnPView -List $PP -Identity 'All Items' -Fields $planFields | Out-Null
 Add-ViewIfMissing $PP 'By Rep' (@('Author') + $planFields) `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Author" /><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="GoalUnits" Type="SUM" /><FieldRef Name="DirectCallsGoal" Type="SUM" /><FieldRef Name="IndirectContactsGoal" Type="SUM" />'
 Add-ViewIfMissing $PP 'Plan vs Actual' @('Author', 'Season', 'Program', 'GoalUnits', 'PlanTotalUnits', 'ActTotalUnits', 'ActAttainment',
-                                         'RetentionPct', 'ActRetentionPct', 'DirectClosePct', 'ActDirectClosePct', 'IndirectClosePct', 'ActIndirectClosePct') `
+                                         'RetentionPct', 'ActRetentionPct', 'PriorGroups', 'ActRetainedGroups', 'ActGroupRetentionPct', 'DirectClosePct', 'ActDirectClosePct', 'IndirectClosePct', 'ActIndirectClosePct') `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Author" /><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="GoalUnits" Type="SUM" /><FieldRef Name="ActTotalUnits" Type="SUM" />'
 

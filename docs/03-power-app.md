@@ -170,7 +170,7 @@ If(
 1. **Gallery** `galPlans`, Items `colMyPlans`. Show in each row:
    - `ThisItem.Program.Value`
    - `"Goal " & ThisItem.'Sales Goal Units' & " · Projected " & Round(ThisItem.'Plan - Projected Total Units', 0) & " (" & Text(ThisItem.'Plan - % of Goal Covered', "0%") & " of goal)"`
-2. **Edit form** `frmPlan`: DataSource `'Program Plans'`, Item `galPlans.Selected`. Fields: Season, Program, Sales Goal Units, Prior Sales Units, Retention %, Direct Calls Goal, Direct Close %, Indirect Contacts Goal, Indirect Close %, Avg Units per New Group.
+2. **Edit form** `frmPlan`: DataSource `'Program Plans'`, Item `galPlans.Selected`. Fields: Season, Program, Sales Goal Units, Prior Year Units, Prior Year Groups, Retention %, Direct Calls Goal, Direct Close %, Indirect Contacts Goal, Indirect Close %, Avg Units per New Group.
 3. **Season card:** set the card's **Update** to `{ Id: varSeason.ID, Value: varSeason.Season }` and **Visible** to `false`. The rep never picks a season; it's always the one on the scorecard.
 4. **Percent cards (Retention %, Direct Close %, Indirect Close %).** SharePoint stores 85% as 0.85. So reps can type 85:
    - The text input's **Default**: `Parent.Default * 100`
@@ -191,13 +191,14 @@ If(
 
 ## 5. scrResults – Season Results
 
-Copy scrPlan (right-click → Duplicate screen) and change the form fields to the **Actual –** input columns: Total Units, Retained Units, Retained Groups, Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings. Remove the "Add program" button; results go on the existing plan rows.
+Copy scrPlan (right-click → Duplicate screen) and change the form fields to the **Actual –** input columns: Total Units, Retained Units (ran last year), Retained Groups (ran last year), Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings. Remove the "Add program" button; results go on the existing plan rows.
 
 Gallery row text:
 
 ```powerfx
 ThisItem.Program.Value & ": " & Text(ThisItem.'Actual - Attainment %', "0%") & " of goal · direct close " &
-Text(ThisItem.'Actual - Direct Close %', "0%") & " (plan " & Text(ThisItem.'Direct Close %', "0%") & ")"
+Text(ThisItem.'Actual - Direct Close %', "0%") & " (plan " & Text(ThisItem.'Direct Close %', "0%") & ")" &
+" · groups back " & Text(ThisItem.'Actual - Group Retention %', "0%")
 ```
 
 ## 6. scrTeam – Team (managers)
