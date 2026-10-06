@@ -34,6 +34,7 @@ No new software to buy or host. It uses SharePoint Lists, Power Apps and Power A
 | 2 | [Data model and formulas](docs/02-data-model.md) (reference: how the workbook maps over) | read only |
 | 3 | [Build the Power App](docs/03-power-app.md) | ½–1 day |
 | 4 | [Friday reminder flows](docs/04-friday-reminder-flow.md) | 1 hour |
+| 5 | [Yearly MFP pull](docs/05-mfp-yearly-pull.md) (prior-year and retention numbers, via Claude in Chrome) | under 1 hour (estimate) |
 
 Times are estimates, not measurements.
 
