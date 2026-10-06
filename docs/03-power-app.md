@@ -99,18 +99,20 @@ If(varIsManager,
 - Default: `varSeason.Season`
 - OnChange: `Set(varSeason, ddSeason.Selected); Select(btnLoad)`
 
-**Header line:** `varSeason.Season & " · " & Text(varElapsed, "0%") & " of the season gone"`
+> Power Apps' `Text()` does **not** turn `"0%"` into a percentage the way Excel does (it rounds the plain number), so every percentage below multiplies by 100 first. This was found on the live build in October 2026.
+
+**Header line:** `varSeason.Season & " · " & Text(varElapsed * 100, "0") & "% of the season gone"`
 
 **Tiles.** Add six tiles (a rectangle plus labels). The text formulas:
 
 | Tile | Big number | Small line |
 |---|---|---|
-| Units | `Text(varUnits, "#,##0")` | `"of " & Text(varGoal, "#,##0") & " goal · " & Text(IfError(varUnits / varGoal, 0), "0%")` |
+| Units | `Text(varUnits, "#,##0")` | `"of " & Text(varGoal, "#,##0") & " goal · " & Text((IfError(varUnits / varGoal, 0)) * 100, "0") & "%"` |
 | In-person calls | `varDirectDone & " / " & varDirectTarget` | `Max(0, varDirectTarget - varDirectDone) & " to go · about " & RoundUp(Max(0, varDirectTarget - varDirectDone) / varDaysLeft, 0) & " per selling day"` |
 | Gatekeeper contacts | `varIndDone & " / " & varIndTarget` | `Max(0, varIndTarget - varIndDone) & " to go · about " & RoundUp(Max(0, varIndTarget - varIndDone) / varDaysLeft, 0) & " per selling day"` |
 | Sales days | `varSalesDays & " / " & Coalesce(varSeason.'Sales Days Goal', 0)` | `"selling days logged"` |
 | New groups | `varBooked & " / " & RoundUp(varGroupsNeeded, 0)` | `"booked of needed this season"` |
-| Close rates (12 months) | `Text(varDirClose12, "0%") & " in-person · " & Text(varIndClose12, "0%") & " gatekeeper"` | `"plan: " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * '% of New Groups from In-Person') / Sum(colMyPlans, 'In-Person Calls Needed'), 0), "0%") & " · " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * (1 - '% of New Groups from In-Person')) / Sum(colMyPlans, 'Gatekeeper Contacts Needed'), 0), "0%")` |
+| Close rates (12 months) | `Text((varDirClose12) * 100, "0") & "%" & " in-person · " & Text((varIndClose12) * 100, "0") & "%" & " gatekeeper"` | `"plan: " & Text((IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * '% of New Groups from In-Person') / Sum(colMyPlans, 'In-Person Calls Needed'), 0)) * 100, "0") & "%" & " · " & Text((IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * (1 - '% of New Groups from In-Person')) / Sum(colMyPlans, 'Gatekeeper Contacts Needed'), 0)) * 100, "0") & "%"` |
 
 **Progress bars (optional, nice on a phone).** Under each activity tile, add a grey rectangle the full width, and on top of it a coloured rectangle with **Width**:
 
@@ -235,15 +237,15 @@ Copy scrPlan (right-click → Duplicate screen) and change the form fields to th
 Gallery row text:
 
 ```powerfx
-ThisItem.Program.Value & ": " & Text(ThisItem.'Actual - Attainment %', "0%") & " of goal · retention " &
-Text(ThisItem.'Actual - Unit Retention %', "0%") & " (plan " & Text(ThisItem.'Retention %', "0%") & ")" &
+ThisItem.Program.Value & ": " & Text((ThisItem.'Actual - Attainment %') * 100, "0") & "%" & " of goal · retention " &
+Text((ThisItem.'Actual - Unit Retention %') * 100, "0") & "%" & " (plan " & Text((ThisItem.'Retention %') * 100, "0") & "%" & ")" &
 " · " & ThisItem.'Actual - New Groups' & " new groups (plan " & RoundUp(ThisItem.'Plan - New Groups Needed', 0) & ")"
 ```
 
 Add a line under the gallery for the close rates, which cover the rep overall rather than each program:
 
 ```powerfx
-"Close rates, last 12 months: " & Text(varDirClose12, "0%") & " in-person · " & Text(varIndClose12, "0%") & " gatekeeper"
+"Close rates, last 12 months: " & Text((varDirClose12) * 100, "0") & "%" & " in-person · " & Text((varIndClose12) * 100, "0") & "%" & " gatekeeper"
 ```
 
 ## 6. scrTeam – Team (managers)
@@ -284,10 +286,10 @@ Sort(
 Labels in each row:
 
 - `ThisItem.RepName & " (" & ThisItem.Code & ")"`
-- `Text(IfError(ThisItem.Units / ThisItem.Goal, 0), "0%") & " of " & ThisItem.Goal & " units"`
+- `Text((IfError(ThisItem.Units / ThisItem.Goal, 0)) * 100, "0") & "%" & " of " & ThisItem.Goal & " units"`
 - `"In-Person " & ThisItem.DirectDone & " / " & ThisItem.DirectTarget & " · Gatekeeper " & ThisItem.IndDone & " / " & ThisItem.IndTarget`
 - `"Groups " & ThisItem.Booked & " / " & ThisItem.Needed & " · " & ThisItem.SalesDays & " selling days · last " & If(IsBlank(ThisItem.LastDay), "never", Text(ThisItem.LastDay, "mmm d"))`
-- `"Close (12 mo) " & Text(ThisItem.DirClose12, "0%") & " in-person · " & Text(ThisItem.IndClose12, "0%") & " gatekeeper"`
+- `"Close (12 mo) " & Text((ThisItem.DirClose12) * 100, "0") & "%" & " in-person · " & Text((ThisItem.IndClose12) * 100, "0") & "%" & " gatekeeper"`
 - A red "No plan yet" label with **Visible** `!ThisItem.HasPlan`
 
 Team totals across the top: `Sum(galTeam.AllItems, Units)`, `Sum(galTeam.AllItems, Goal)`, and so on.
