@@ -2,10 +2,11 @@
 
 A replacement for the **Accountable Sales Planning Tool** Excel workbook, built on Microsoft 365. It's for 6 sales reps and 2 managers.
 
-- **Reps** plan their season once, check in every Friday (about a minute, on their phone), and see their own scorecard.
+- **Reps** set a goal per program with their retention and conversion rates. The plan works backward to the **calls and contacts needed, plus a 10% cushion**.
+- **Each selling day**, reps log their calls, contacts and bookings in about 20 seconds on their phone, and see their progress against target.
 - **Each rep sees only their own data.** SharePoint enforces this, not just the app.
-- **Managers** (2) see a team view: attainment, direct and indirect activity vs pace, and missed check-ins.
-- **Every Friday** an automatic email goes to reps who haven't checked in. **Every Monday** the managers get the list of who's still missing.
+- **Managers** (2) see a team view: units vs goal, direct and indirect activity vs target, groups booked vs needed, and each rep's last activity date.
+- **Every Friday** an email reminds any rep who logged nothing that week. **Every Monday** the managers get a digest of last week's activity.
 - **A new year or season** is one new row in a list. Nothing is rebuilt.
 
 No new software to buy or host. It uses SharePoint Lists, Power Apps and Power Automate, which come with your Microsoft 365 licenses. (Confirm your plan in the M365 admin center; Power BI is the only optional piece that may need an extra license.)
@@ -18,12 +19,12 @@ No new software to buy or host. It uses SharePoint Lists, Power Apps and Power A
       Rite Bite Sales Planner (Power App) ───── Team screen
                │
    ┌───────────┴─────────────── SharePoint site "Sales Planner" ─────────────────┐
-   │  Seasons            Reps (roster)       Program Plans       Weekly Check-ins │
-   │  managers edit,     managers only       plan + actuals,     Friday numbers,  │
-   │  reps read                              rep sees own rows   rep sees own rows│
+   │  Seasons            Reps (roster)       Program Plans       Daily Activity   │
+   │  managers edit,     managers only       plan + actuals,     one row per      │
+   │  reps read                              rep sees own rows   selling day, own │
    └───────────────────────────────────────────────────────────────────────────────┘
                │
-   Power Automate: Friday reminder to reps  ·  Monday "missing" list to managers
+   Power Automate: Friday reminder to reps  ·  Monday activity digest to managers
 ```
 
 ## Build order
@@ -33,7 +34,7 @@ No new software to buy or host. It uses SharePoint Lists, Power Apps and Power A
 | 1 | [Set up the site and lists](docs/01-setup.md) (runs `provisioning/Deploy-SalesPlanner.ps1`) | 30–60 min |
 | 2 | [Data model and formulas](docs/02-data-model.md) (reference: how the workbook maps over) | read only |
 | 3 | [Build the Power App](docs/03-power-app.md) | ½–1 day |
-| 4 | [Friday reminder flows](docs/04-friday-reminder-flow.md) | 1 hour |
+| 4 | [Weekly emails](docs/04-friday-reminder-flow.md) | 1 hour |
 | 5 | [Yearly MFP pull](docs/05-mfp-yearly-pull.md) (prior-year and retention numbers, via Claude in Chrome) | under 1 hour (estimate) |
 
 Times are estimates, not measurements.

@@ -57,7 +57,7 @@ The script:
 | **Seasons** list | Season name, start date (Jan 1 or Jul 1), number of weeks, sales-days goal, which season is current | Managers edit; reps read only |
 | **Reps** list | Roster: name, MFP Owning User code, active? | Managers only |
 | **Program Plans** list | Each rep's pre-season plan per program, plus post-season actuals | Each rep: only their own rows. Managers: all |
-| **Weekly Check-ins** list | Each rep's Friday numbers | Each rep: only their own rows. Managers: all |
+| **Daily Activity** list | One row per rep per selling day: calls, contacts, bookings, MFP units | Each rep: only their own rows. Managers: all |
 
 It's safe to run again (for example, to add a new rep). Anything that already exists is skipped.
 
@@ -73,8 +73,8 @@ It's safe to run again (for example, to add a new rep). Anything that already ex
 
 ## Step 5: Test the privacy (don't skip)
 
-1. Ask one rep (or use a test account in the Reps group) to open the site and add a test row to **Weekly Check-ins**.
-2. Ask a second rep to open **Weekly Check-ins**. **They should not see the first rep's row.**
+1. Ask one rep (or use a test account in the Reps group) to open the site and add a test row to **Daily Activity**.
+2. Ask a second rep to open **Daily Activity**. **They should not see the first rep's row.**
 3. You (manager) should see both rows, and the **By Rep** view should group them.
 4. Delete the test rows.
 
@@ -84,4 +84,4 @@ If a rep can see other people's rows, they are almost certainly in a group with 
 
 - [2. Data model and formulas](02-data-model.md): what each column means
 - [3. Power App](03-power-app.md): the phone-friendly app reps actually use
-- [4. Friday reminder flow](04-friday-reminder-flow.md): automatic nudges for missed check-ins
+- [4. Weekly emails](04-friday-reminder-flow.md): Friday reminder to reps, Monday digest to managers
