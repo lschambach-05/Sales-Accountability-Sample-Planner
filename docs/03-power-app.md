@@ -7,7 +7,7 @@ Reps could use the SharePoint lists directly, but a small phone app makes loggin
 
 > **Honesty note:** the formulas below are written carefully but couldn't be tested inside your tenant. Power Apps underlines anything it doesn't accept in red, and the fix is usually a column display name that's slightly different. If something won't take, copy the red error message and send it over.
 
-Column names below use the default labels **Direct** and **Indirect**. If you changed them in the setup script (`-DirectLabel` / `-IndirectLabel`), use your labels instead.
+Column names below use the labels **In-Person** (direct sales calls) and **Gatekeeper** (indirect contacts), the setup script's defaults. If you change them (`-DirectLabel` / `-IndirectLabel`), use your labels instead.
 
 ---
 
@@ -15,7 +15,7 @@ Column names below use the default labels **Direct** and **Indirect**. If you ch
 
 | Screen | Who | What it does |
 |---|---|---|
-| **scrHome** – My Scorecard | Everyone | Season picker; units vs goal; direct calls, indirect contacts and sales days vs target; new groups booked vs needed; close rates over the last 12 months |
+| **scrHome** – My Scorecard | Everyone | Season picker; units vs goal; in-person calls, gatekeeper contacts and sales days vs target; new groups booked vs needed; close rates over the last 12 months |
 | **scrLog** – Log a Day | Everyone | One quick form per selling day. Re-opening the same date edits that day instead of duplicating it |
 | **scrPlan** – My Plan | Everyone | Goal, retention and conversion rates per program. Shows the calls and contacts each program needs |
 | **scrResults** – Season Results | Everyone | Post-season actuals per program |
@@ -60,17 +60,17 @@ ClearCollect(colMyDays,
 ClearCollect(colMyYear,
     Filter('Daily Activity', 'Created By'.Email = User().Email &&
         'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
-Set(varDirClose12, IfError(Sum(colMyYear, 'New Groups Booked - Direct') / Sum(colMyYear, 'Direct Calls'), 0));
-Set(varIndClose12, IfError(Sum(colMyYear, 'New Groups Booked - Indirect') / Sum(colMyYear, 'Indirect Contacts'), 0));
+Set(varDirClose12, IfError(Sum(colMyYear, 'New Groups Booked - In-Person') / Sum(colMyYear, 'In-Person Calls'), 0));
+Set(varIndClose12, IfError(Sum(colMyYear, 'New Groups Booked - Gatekeeper') / Sum(colMyYear, 'Gatekeeper Contacts'), 0));
 
 // Totals used by the tiles
 Set(varGoal,          Sum(colMyPlans, 'Sales Goal Units'));
-Set(varDirectTarget,  Sum(colMyPlans, 'Direct Calls Target'));
-Set(varIndTarget,     Sum(colMyPlans, 'Indirect Contacts Target'));
+Set(varDirectTarget,  Sum(colMyPlans, 'In-Person Calls Target'));
+Set(varIndTarget,     Sum(colMyPlans, 'Gatekeeper Contacts Target'));
 Set(varGroupsNeeded,  Sum(colMyPlans, 'Plan - New Groups Needed'));
-Set(varDirectDone,    Sum(colMyDays, 'Direct Calls'));
-Set(varIndDone,       Sum(colMyDays, 'Indirect Contacts'));
-Set(varBooked,        Sum(colMyDays, 'New Groups Booked - Direct') + Sum(colMyDays, 'New Groups Booked - Indirect'));
+Set(varDirectDone,    Sum(colMyDays, 'In-Person Calls'));
+Set(varIndDone,       Sum(colMyDays, 'Gatekeeper Contacts'));
+Set(varBooked,        Sum(colMyDays, 'New Groups Booked - In-Person') + Sum(colMyDays, 'New Groups Booked - Gatekeeper'));
 Set(varSalesDays,     Sum(colMyDays, 'Sales Day'));
 Set(varUnits,         Coalesce(First(Filter(colMyDays, !IsBlank('MFP Units Season-to-Date'))).'MFP Units Season-to-Date', 0));
 
@@ -104,11 +104,11 @@ If(varIsManager,
 | Tile | Big number | Small line |
 |---|---|---|
 | Units | `Text(varUnits, "#,##0")` | `"of " & Text(varGoal, "#,##0") & " goal · " & Text(IfError(varUnits / varGoal, 0), "0%")` |
-| Direct calls | `varDirectDone & " / " & varDirectTarget` | `Max(0, varDirectTarget - varDirectDone) & " to go · about " & RoundUp(Max(0, varDirectTarget - varDirectDone) / varDaysLeft, 0) & " per selling day"` |
-| Indirect contacts | `varIndDone & " / " & varIndTarget` | `Max(0, varIndTarget - varIndDone) & " to go · about " & RoundUp(Max(0, varIndTarget - varIndDone) / varDaysLeft, 0) & " per selling day"` |
+| In-person calls | `varDirectDone & " / " & varDirectTarget` | `Max(0, varDirectTarget - varDirectDone) & " to go · about " & RoundUp(Max(0, varDirectTarget - varDirectDone) / varDaysLeft, 0) & " per selling day"` |
+| Gatekeeper contacts | `varIndDone & " / " & varIndTarget` | `Max(0, varIndTarget - varIndDone) & " to go · about " & RoundUp(Max(0, varIndTarget - varIndDone) / varDaysLeft, 0) & " per selling day"` |
 | Sales days | `varSalesDays & " / " & Coalesce(varSeason.'Sales Days Goal', 0)` | `"selling days logged"` |
 | New groups | `varBooked & " / " & RoundUp(varGroupsNeeded, 0)` | `"booked of needed this season"` |
-| Close rates (12 months) | `Text(varDirClose12, "0%") & " direct · " & Text(varIndClose12, "0%") & " indirect"` | `"plan: " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * '% of New Groups from Direct') / Sum(colMyPlans, 'Direct Calls Needed'), 0), "0%") & " · " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * (1 - '% of New Groups from Direct')) / Sum(colMyPlans, 'Indirect Contacts Needed'), 0), "0%")` |
+| Close rates (12 months) | `Text(varDirClose12, "0%") & " in-person · " & Text(varIndClose12, "0%") & " gatekeeper"` | `"plan: " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * '% of New Groups from In-Person') / Sum(colMyPlans, 'In-Person Calls Needed'), 0), "0%") & " · " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * (1 - '% of New Groups from In-Person')) / Sum(colMyPlans, 'Gatekeeper Contacts Needed'), 0), "0%")` |
 
 **Progress bars (optional, nice on a phone).** Under each activity tile, add a grey rectangle the full width, and on top of it a coloured rectangle with **Width**:
 
@@ -120,7 +120,7 @@ There's deliberately **no red/amber "behind pace" colour**. Selling comes in bur
 
 **Buttons:** "Log a Day" → `Navigate(scrLog)`, "My Plan" → `Navigate(scrPlan)`, "Season Results" → `Navigate(scrResults)`, "Team" → `Navigate(scrTeam)` with **Visible** = `varIsManager`.
 
-**Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'Direct Calls' & " direct, " & ThisItem.'Indirect Contacts' & " indirect"`. Selecting a row: `Set(varPickDate, ThisItem.'Activity Date'); Navigate(scrLog)`.
+**Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'In-Person Calls' & " in-person, " & ThisItem.'Gatekeeper Contacts' & " gatekeeper"`. Selecting a row: `Set(varPickDate, ThisItem.'Activity Date'); Navigate(scrLog)`.
 
 ## 3. scrLog – Log a Day
 
@@ -139,10 +139,10 @@ Set(varExisting, LookUp(colMyDays,
 
 | Control | Default | Hint text |
 |---|---|---|
-| txtDirect | `varExisting.'Direct Calls'` | Direct calls today |
-| txtIndirect | `varExisting.'Indirect Contacts'` | Indirect contacts today |
-| txtDirBook | `varExisting.'New Groups Booked - Direct'` | New groups booked (direct) |
-| txtIndBook | `varExisting.'New Groups Booked - Indirect'` | New groups booked (indirect) |
+| txtDirect | `varExisting.'In-Person Calls'` | In-person calls today |
+| txtIndirect | `varExisting.'Gatekeeper Contacts'` | Gatekeeper contacts today |
+| txtDirBook | `varExisting.'New Groups Booked - In-Person'` | New groups booked (in-person) |
+| txtIndBook | `varExisting.'New Groups Booked - Gatekeeper'` | New groups booked (gatekeeper) |
 | txtUnits | `varExisting.'MFP Units Season-to-Date'` | MFP season-to-date units (if you checked today) |
 | txtNotes | `varExisting.Notes` | Notes |
 
@@ -155,17 +155,17 @@ If(
     dpDate.SelectedDate < varSeason.'Season Start',
         Notify("That date is before " & varSeason.Season & " started.", NotificationType.Error),
     IsBlank(txtDirect.Text) || IsBlank(txtIndirect.Text),
-        Notify("Enter direct calls and indirect contacts (0 is fine).", NotificationType.Error),
+        Notify("Enter in-person calls and gatekeeper contacts (0 is fine).", NotificationType.Error),
     IfError(
         Patch('Daily Activity',
             If(IsBlank(varExisting), Defaults('Daily Activity'), varExisting),
             {
                 Season: { Id: varSeason.ID, Value: varSeason.Season },
                 'Activity Date': dpDate.SelectedDate,
-                'Direct Calls': Value(txtDirect.Text),
-                'Indirect Contacts': Value(txtIndirect.Text),
-                'New Groups Booked - Direct': Value(txtDirBook.Text),
-                'New Groups Booked - Indirect': Value(txtIndBook.Text),
+                'In-Person Calls': Value(txtDirect.Text),
+                'Gatekeeper Contacts': Value(txtIndirect.Text),
+                'New Groups Booked - In-Person': Value(txtDirBook.Text),
+                'New Groups Booked - Gatekeeper': Value(txtIndBook.Text),
                 'MFP Units Season-to-Date': If(IsBlank(txtUnits.Text), Blank(), Value(txtUnits.Text)),
                 Notes: txtNotes.Text
             }),
@@ -182,15 +182,15 @@ If(
 1. **Gallery** `galPlans`, Items `colMyPlans`. Show in each row:
    - `ThisItem.Program.Value`
    - `"Goal " & ThisItem.'Sales Goal Units' & " · " & RoundUp(ThisItem.'Plan - New Groups Needed', 0) & " new groups needed"`
-   - `"Target: " & ThisItem.'Direct Calls Target' & " direct calls · " & ThisItem.'Indirect Contacts Target' & " indirect contacts"`
+   - `"Target: " & ThisItem.'In-Person Calls Target' & " in-person calls · " & ThisItem.'Gatekeeper Contacts Target' & " gatekeeper contacts"`
 2. **Edit form** `frmPlan`: DataSource `'Program Plans'`, Item `galPlans.Selected`. Fields, in this order:
    - Season, Program
    - Prior Year Units, Prior Year Groups
    - Growth Goal %, Goal Units Override
    - Retention %, Avg Units per New Group
-   - % of New Groups from Direct, Direct Close %, Indirect Close %
+   - % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %
 3. **Season card:** set the card's **Update** to `{ Id: varSeason.ID, Value: varSeason.Season }` and **Visible** to `false`. The rep never picks a season; it's always the one on the scorecard.
-4. **Percent cards** (Growth Goal %, Retention %, % of New Groups from Direct, Direct Close %, Indirect Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
+4. **Percent cards** (Growth Goal %, Retention %, % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
    - The text input's **Default**: `Parent.Default * 100`
    - The card's **Update**: `Value(<that text input>.Text) / 100`
 5. **Live preview under the form**, so the rep sees the calls needed before saving. Add a label with **Text**:
@@ -202,15 +202,15 @@ If(
        over:   Value(<Goal Units Override input>.Text),
        ret:    Value(<Retention % input>.Text) / 100,
        avg:    Value(<Avg Units input>.Text),
-       share:  Value(<% from Direct input>.Text) / 100,
-       dc:     Value(<Direct Close % input>.Text) / 100,
-       ic:     Value(<Indirect Close % input>.Text) / 100
+       share:  Value(<% from In-Person input>.Text) / 100,
+       dc:     Value(<In-Person Close % input>.Text) / 100,
+       ic:     Value(<Gatekeeper Close % input>.Text) / 100
    },
    With({ goal: If(over > 0, over, Round(prior * (1 + growth), 0)) },
    With({ groups: IfError(Max(0, goal - Round(prior * ret, 0)) / avg, 0) },
        "Goal " & goal & " units → " & RoundUp(groups, 0) & " new groups → " &
-       RoundUp(IfError(groups * share / dc, 0) * 1.1, 0) & " direct calls and " &
-       RoundUp(IfError(groups * (1 - share) / ic, 0) * 1.1, 0) & " indirect contacts (incl. 10% cushion)")))
+       RoundUp(IfError(groups * share / dc, 0) * 1.1, 0) & " in-person calls and " &
+       RoundUp(IfError(groups * (1 - share) / ic, 0) * 1.1, 0) & " gatekeeper contacts (incl. 10% cushion)")))
    ```
 
    Replace each `<… input>` with the control name Power Apps gave that field's text box (for example `DataCardValue5`).
@@ -225,7 +225,7 @@ If(
    ```
 
 8. **frmPlan.OnSuccess:** `Refresh('Program Plans'); ClearCollect(colMyPlans, Filter('Program Plans', Season.Id = varSeason.ID && 'Created By'.Email = User().Email)); Notify("Plan saved", NotificationType.Success)`
-9. **Header totals:** `"Season goal " & Sum(colMyPlans, 'Sales Goal Units') & " · " & Sum(colMyPlans, 'Direct Calls Target') & " direct calls · " & Sum(colMyPlans, 'Indirect Contacts Target') & " indirect contacts"`
+9. **Header totals:** `"Season goal " & Sum(colMyPlans, 'Sales Goal Units') & " · " & Sum(colMyPlans, 'In-Person Calls Target') & " in-person calls · " & Sum(colMyPlans, 'Gatekeeper Contacts Target') & " gatekeeper contacts"`
 
 ## 5. scrResults – Season Results
 
@@ -242,7 +242,7 @@ Text(ThisItem.'Actual - Unit Retention %', "0%") & " (plan " & Text(ThisItem.'Re
 Add a line under the gallery for the close rates, which cover the rep overall rather than each program:
 
 ```powerfx
-"Close rates, last 12 months: " & Text(varDirClose12, "0%") & " direct · " & Text(varIndClose12, "0%") & " indirect"
+"Close rates, last 12 months: " & Text(varDirClose12, "0%") & " in-person · " & Text(varIndClose12, "0%") & " gatekeeper"
 ```
 
 ## 6. scrTeam – Team (managers)
@@ -263,16 +263,16 @@ Sort(
             Code:         r.'MFP Owning User Code',
             Goal:         Sum(p, 'Sales Goal Units'),
             Units:        Coalesce(First(Filter(d, !IsBlank('MFP Units Season-to-Date'))).'MFP Units Season-to-Date', 0),
-            DirectDone:   Sum(d, 'Direct Calls'),
-            DirectTarget: Sum(p, 'Direct Calls Target'),
-            IndDone:      Sum(d, 'Indirect Contacts'),
-            IndTarget:    Sum(p, 'Indirect Contacts Target'),
-            Booked:       Sum(d, 'New Groups Booked - Direct') + Sum(d, 'New Groups Booked - Indirect'),
+            DirectDone:   Sum(d, 'In-Person Calls'),
+            DirectTarget: Sum(p, 'In-Person Calls Target'),
+            IndDone:      Sum(d, 'Gatekeeper Contacts'),
+            IndTarget:    Sum(p, 'Gatekeeper Contacts Target'),
+            Booked:       Sum(d, 'New Groups Booked - In-Person') + Sum(d, 'New Groups Booked - Gatekeeper'),
             Needed:       RoundUp(Sum(p, 'Plan - New Groups Needed'), 0),
             SalesDays:    Sum(d, 'Sales Day'),
             LastDay:      First(d).'Activity Date',
-            DirClose12:   IfError(Sum(y, 'New Groups Booked - Direct') / Sum(y, 'Direct Calls'), 0),
-            IndClose12:   IfError(Sum(y, 'New Groups Booked - Indirect') / Sum(y, 'Indirect Contacts'), 0),
+            DirClose12:   IfError(Sum(y, 'New Groups Booked - In-Person') / Sum(y, 'In-Person Calls'), 0),
+            IndClose12:   IfError(Sum(y, 'New Groups Booked - Gatekeeper') / Sum(y, 'Gatekeeper Contacts'), 0),
             HasPlan:      CountRows(p) > 0
         })
     ),
@@ -284,9 +284,9 @@ Labels in each row:
 
 - `ThisItem.RepName & " (" & ThisItem.Code & ")"`
 - `Text(IfError(ThisItem.Units / ThisItem.Goal, 0), "0%") & " of " & ThisItem.Goal & " units"`
-- `"Direct " & ThisItem.DirectDone & " / " & ThisItem.DirectTarget & " · Indirect " & ThisItem.IndDone & " / " & ThisItem.IndTarget`
+- `"In-Person " & ThisItem.DirectDone & " / " & ThisItem.DirectTarget & " · Gatekeeper " & ThisItem.IndDone & " / " & ThisItem.IndTarget`
 - `"Groups " & ThisItem.Booked & " / " & ThisItem.Needed & " · " & ThisItem.SalesDays & " selling days · last " & If(IsBlank(ThisItem.LastDay), "never", Text(ThisItem.LastDay, "mmm d"))`
-- `"Close (12 mo) " & Text(ThisItem.DirClose12, "0%") & " direct · " & Text(ThisItem.IndClose12, "0%") & " indirect"`
+- `"Close (12 mo) " & Text(ThisItem.DirClose12, "0%") & " in-person · " & Text(ThisItem.IndClose12, "0%") & " gatekeeper"`
 - A red "No plan yet" label with **Visible** `!ThisItem.HasPlan`
 
 Team totals across the top: `Sum(galTeam.AllItems, Units)`, `Sum(galTeam.AllItems, Goal)`, and so on.

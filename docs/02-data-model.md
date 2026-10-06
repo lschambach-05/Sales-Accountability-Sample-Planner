@@ -2,6 +2,8 @@
 
 This page shows how the old **Accountable Sales Planning Tool** workbook maps onto the new lists, so the math stays recognizable.
 
+**Labels:** the two kinds of sales activity are called **In-Person** (direct sales calls) and **Gatekeeper** (indirect contacts). They can be renamed with the setup script's `-DirectLabel` / `-IndirectLabel` options.
+
 ## Big changes from the workbook
 
 | Workbook | New system | Why |
@@ -9,7 +11,7 @@ This page shows how the old **Accountable Sales Planning Tool** workbook maps on
 | One file per rep | One site; each rep sees only their own rows | Managers get a team view without opening 6 files |
 | Separate Fall / Spring tabs, "2027" typed into 100+ formulas | **Season** is a dropdown that pulls from the Seasons list | A new year is one new row; nothing is rebuilt |
 | Daily call entry on a 100-row sheet | **Daily activity log**, one quick entry per selling day | Logged while it's fresh; sales days are counted automatically (any day with activity) |
-| One "in-person calls" number | **Direct calls** and **indirect contacts** logged separately, plus new groups booked by each | Activity is tracked against the plan's direct and indirect targets |
+| One "in-person calls" number | **Direct calls** and **gatekeeper contacts** logged separately, plus new groups booked by each | Activity is tracked against the plan's direct and indirect targets |
 | Rep typed in a calls goal, and the sheet showed what it would produce | Rep sets the **goal and conversion rates**; the plan works **backward** to the calls needed, **plus 10%** | Reps see exactly how much activity the goal takes, with a cushion |
 | Post-season actuals on the Goals tab | Same row as the plan, in **Program Plans** | Plan vs actual sit side by side |
 
@@ -75,12 +77,12 @@ Sales Goal Units            = Prior Year Units × (1 + Growth Goal %)      (or t
 − Retained Units            = Prior Year Units × Retention %
 = New Units Needed          (never below 0)
 ÷ Avg Units per New Group   = New Groups Needed
-× % of New Groups from Direct          → direct groups   ÷ Direct Close %   = Direct Calls Needed
-× (1 − % of New Groups from Direct)    → indirect groups ÷ Indirect Close % = Indirect Contacts Needed
+× % of New Groups from In-Person          → direct groups   ÷ In-Person Close %   = In-Person Calls Needed
+× (1 − % of New Groups from In-Person)    → indirect groups ÷ Gatekeeper Close % = Gatekeeper Contacts Needed
 Target = Needed × 1.10, rounded up
 ```
 
-Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units, growth 25% → goal 5,000. Retention 75% → 3,000 retained, so 2,000 new units needed. Avg 250 units per new group → 8 new groups. 60% from direct at a 20% close rate → 24 direct calls needed, **target 27**. 40% from indirect at 5% → 64 indirect contacts needed, **target 71**.
+Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units, growth 25% → goal 5,000. Retention 75% → 3,000 retained, so 2,000 new units needed. Avg 250 units per new group → 8 new groups. 60% from direct at a 20% close rate → 24 in-person calls needed, **target 27**. 40% from indirect at 5% → 64 gatekeeper contacts needed, **target 71**.
 
 **Pre-season inputs:**
 
@@ -93,9 +95,9 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 | Goal Units Override | Optional. A set unit goal instead of growth %, for example a program the rep didn't sell last year | (row 6) |
 | Retention % | Share of last year's units expected back from returning groups | 8 |
 | Avg Units per New Group | | 14 |
-| % of New Groups from Direct | How the new groups are expected to split between direct and indirect | new |
-| Direct Close % | Share of direct calls that book a fundraiser | 11 |
-| Indirect Close % | Share of indirect contacts that book a fundraiser | 13 |
+| % of New Groups from In-Person | How the new groups are expected to split between direct and indirect | new |
+| In-Person Close % | Share of in-person calls that book a fundraiser | 11 |
+| Gatekeeper Close % | Share of gatekeeper contacts that book a fundraiser | 13 |
 
 **Calculated:**
 
@@ -105,10 +107,10 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 | Plan – Retained Units | Prior Year Units × Retention % |
 | Plan – New Units Needed | Goal − Retained (never below 0) |
 | Plan – New Groups Needed | New Units Needed ÷ Avg Units per New Group |
-| Direct Calls Needed | New Groups × direct share ÷ Direct Close %, rounded up |
-| Direct Calls Target | Direct Calls Needed × 1.10, rounded up. **This is what the app tracks.** |
-| Indirect Contacts Needed | New Groups × indirect share ÷ Indirect Close %, rounded up |
-| Indirect Contacts Target | Indirect Contacts Needed × 1.10, rounded up. **This is what the app tracks.** |
+| In-Person Calls Needed | New Groups × direct share ÷ In-Person Close %, rounded up |
+| In-Person Calls Target | In-Person Calls Needed × 1.10, rounded up. **This is what the app tracks.** |
+| Gatekeeper Contacts Needed | New Groups × indirect share ÷ Gatekeeper Close %, rounded up |
+| Gatekeeper Contacts Target | Gatekeeper Contacts Needed × 1.10, rounded up. **This is what the app tracks.** |
 
 The cushion is a setting in the setup script (`-CallBuffer 0.10`). Changing it later means editing the two Target formulas in the list's column settings.
 
@@ -138,9 +140,9 @@ All divisions return 0 instead of an error when the bottom number is 0.
 |---|---|
 | Season | Lookup to Seasons |
 | Activity Date | The day the activity happened |
-| Direct Calls | Direct sales calls that day |
-| Indirect Contacts | Indirect contacts that day |
-| New Groups Booked – Direct / Indirect | Optional, but it shows the real close rate during the season |
+| In-Person Calls | Direct sales calls that day |
+| Gatekeeper Contacts | Indirect contacts that day |
+| New Groups Booked – In-Person / Gatekeeper | Optional, but it shows the real close rate during the season |
 | MFP Units Season-to-Date | Optional. The running total from the MFP dashboard, entered whenever the rep checks it (at least weekly). The most recent entry counts. |
 | Notes | Wins, blockers |
 | Sales Day | Calculated: 1 if any calls or contacts were logged that day. Adds up to the sales days count |
@@ -149,7 +151,7 @@ Reps only log days they sell, so a week with no selling is simply a week with no
 
 **In-season scorecard math** (done in the app):
 
-- Direct calls, indirect contacts, bookings and sales days = sums of the season's rows
+- Direct calls, gatekeeper contacts, bookings and sales days = sums of the season's rows
 - Progress = done ÷ target (target = the +10% numbers, summed across the rep's program rows)
 - Remaining = target − done; per selling day left = remaining ÷ (Sales Days Goal − sales days so far)
 - Units to date = the most recent MFP Units Season-to-Date entry, compared with Sales Goal Units

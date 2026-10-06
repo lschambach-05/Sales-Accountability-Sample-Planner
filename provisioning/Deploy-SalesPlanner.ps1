@@ -45,8 +45,8 @@ param(
     # Extra calls/contacts on top of what the math says is needed (0.10 = 10%).
     [double]   $CallBuffer = 0.10,
     # Labels for the two kinds of sales activity. Change them here and re-run to rename the columns.
-    [string]   $DirectLabel = 'Direct',
-    [string]   $IndirectLabel = 'Indirect',
+    [string]   $DirectLabel = 'In-Person',
+    [string]   $IndirectLabel = 'Gatekeeper',
     [string[]] $Programs = @(
         'Butter Braid Pastry',
         'Combo',
