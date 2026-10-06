@@ -58,12 +58,14 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 - 25 invoices with no fundraiser (185 units) were left out.
 - 13 group names appear under more than one Group ID. Most are different organizations with the same name. A few may be duplicate records.
 
-## Still to decide in the planner build
+## Decisions (Lynwood, October 2026)
 
-- Is Braided Pastry the same as the planner's "Butter Braid Pastry"?
-- Does Combo get its own program row?
-- Which rep codes are current, and should a group's history move to its current owner? Known rollups: BLS → KJS, LBS → KJP, LMD → JMK.
-- Do Open fundraisers count, or only Closed ones?
+- **Braided Pastry** in MFP is the planner's **Butter Braid Pastry**.
+- **Combo** is its own program. **Batavia Music Buffs** is its own program too; it runs all products, and MFP names it by year.
+- **Current reps:** BPR, JK, JMK, KJP, KJS, RB. Rollups: BLS → KJS, LBS → KJP, LMD → JMK.
+- **A group's history moves to its current rep**, meaning the owner of its most recent counted fundraiser. Groups last owned by anyone else (BJS, GLP, LSS) go to the current rep with the most groups in the same city, or failing that the same county. See *Group locations* below.
+- **Open fundraisers count if they were invoiced** (units sold). Open bookings with nothing sold are left out, and so are canceled fundraisers.
+- **Duplicate group records:** Group ID 199961 is merged into 84951 (St. Paul's Lutheran School, JK). Other same-name IDs stay separate.
 
 ## What happens next (in the planner build)
 
@@ -76,3 +78,34 @@ With that file in the SharePoint folder, the retention numbers are calculated fo
 | New units, new groups | Avg units per new group |
 
 The result is a ready-to-import sheet for the Program Plans list, so reps start their 2026 plans with last year's numbers already filled in.
+
+## Turning the pull into each rep's baseline
+
+`tools/build_rep_baseline.py` turns the pull's CSV into **Rep Baseline (from MFP).xlsx**. The workbook has a Read Me tab, a planner-ready Rep Program Summary, Rep Totals, Group Detail and a Review tab. Every total and percentage is a live Excel formula over Group Detail.
+
+```bash
+python tools/build_rep_baseline.py "MFP group sales 2024-2025.csv" "Rep Baseline 2025 (from MFP).xlsx"
+```
+
+The rules (agreed with Lynwood, October 2026) are set at the top of the script. Update them when reps or programs change:
+
+- **Current reps:** BPR, JK, JMK, KJP, KJS, RB. Rollups: BLS → KJS, LBS → KJP, LMD → JMK. Groups last owned by anyone else show as *Unassigned*.
+- **Each group's history** goes to its current rep: the owner of its most recent counted fundraiser.
+- **What counts:** Closed fundraisers, plus Open ones that were invoiced (units sold). Canceled fundraisers and Open bookings with nothing sold are left out.
+- **Programs:** MFP "Braided Pastry" = Butter Braid Pastry. Combo and Batavia Music Buffs are their own programs.
+- **Duplicate groups:** listed in `GROUP_MERGES`. **Placed groups:** listed in `OWNER_OVERRIDES`.
+- **Retained:** the group ran any program, in either season, the previous year.
+
+The sales data itself is kept in SharePoint, not in this repository.
+
+## Group locations (for placing unassigned groups)
+
+When a group's last owner is no longer a rep, the group goes to the **current rep with the most groups in the same city**, or failing that, the **same county** (Lynwood, Oct 2026). Ties, and groups with no match, are listed for Lynwood to decide. This needs each group's location, which the sales pull doesn't include. Paste this into the Claude-with-Chrome session:
+
+> **Task: export group locations from My Fundraising Place, read-only.**
+>
+> Using the groups in `MFP group sales 2024-2025.csv` (in my SharePoint folder Rite Bite Claude Skills → Documents → Lynwood → Sales Accountibility Sample Planner), look up each **Group ID**'s address in My Fundraising Place. This is **read-only**: don't edit or save anything in MFP.
+>
+> Save `MFP group locations.csv` to the same folder with one row per Group ID and these columns: **Group ID, Group Name, City, State, ZIP, County**. Fill County only if MFP stores it; otherwise leave it blank. If the address only exists on the group's invoices, use the bill-to or ship-to address and add a **Source** column saying which one.
+>
+> If looking up every group is too slow, do these 7 groups first, then the rest: 163565, 191059, 191570, 191969, 192955, 193455, 202009. Tell me how many groups have no address.
