@@ -111,7 +111,7 @@ The rep is whoever **created** the row ("Created By"). That's also what item-lev
 
 All divisions return 0 instead of an error when the bottom number is 0.
 
-**Percent columns:** in SharePoint these are stored as fractions (85% = 0.85). When you first test, check whether the list form wants **85** or **0.85** typed in. The Power App handles this for reps (see page 3).
+**Percent columns:** in the list forms, type **50** for 50%. This was confirmed on the live site in October 2026: Retention 50 on 800 prior units gave 400 retained. SharePoint stores the value as a fraction (0.5), and that's what Power Apps and Power Automate read, which is why the Power App percent fields multiply and divide by 100 (see page 3).
 
 ## Weekly Check-ins (one row per rep × week)
 

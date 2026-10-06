@@ -60,4 +60,5 @@ Times are estimates, not measurements.
 
 ## Status
 
-The setup script parses cleanly, and every PnP PowerShell command and parameter it uses was checked against PnP's published documentation. It **has not yet been run against a live tenant**, and the Power Fx and flow formulas haven't been tested in your tenant either. Plan for a short round of fixes on first setup.
+- **SharePoint setup:** run on the live site (ritebitefundraising.sharepoint.com/sites/SalesPlanner) on October 6, 2026. All four lists were created and the plan formulas checked against a test row.
+- **Power App and reminder flows:** not built yet. Their formulas haven't been tested in the tenant, so plan for a short round of fixes when building them.
