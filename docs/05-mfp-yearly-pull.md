@@ -62,3 +62,15 @@ The rules (agreed with Lynwood, October 2026) are set at the top of the script. 
 - **Retained:** the group ran any program, in either season, the previous year.
 
 The sales data itself is kept in SharePoint, not in this repository.
+
+## Group locations (for placing unassigned groups)
+
+When a group's last owner is no longer a rep, the group goes to the **current rep with the most groups in the same city**, or failing that, the **same county** (Lynwood, Oct 2026). Ties, and groups with no match, are listed for Lynwood to decide. This needs each group's location, which the sales pull doesn't include. Paste this into the Claude-with-Chrome session:
+
+> **Task: export group locations from My Fundraising Place, read-only.**
+>
+> Using the groups in `MFP group sales 2024-2025.csv` (in my SharePoint folder Rite Bite Claude Skills → Documents → Lynwood → Sales Accountibility Sample Planner), look up each **Group ID**'s address in My Fundraising Place. This is **read-only**: don't edit or save anything in MFP.
+>
+> Save `MFP group locations.csv` to the same folder with one row per Group ID and these columns: **Group ID, Group Name, City, State, ZIP, County**. Fill County only if MFP stores it; otherwise leave it blank. If the address only exists on the group's invoices, use the bill-to or ship-to address and add a **Source** column saying which one.
+>
+> If looking up every group is too slow, do these 7 groups first, then the rest: 163565, 191059, 191570, 191969, 192955, 193455, 202009. Tell me how many groups have no address.

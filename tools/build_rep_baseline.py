@@ -16,8 +16,19 @@ R = list(csv.DictReader(open(SRC)))
 CURRENT = ['BPR', 'JK', 'JMK', 'KJP', 'KJS', 'RB']
 ROLLUP = {'BLS': 'KJS', 'LBS': 'KJP', 'LMD': 'JMK'}
 PROGRAMS = {'Braided Pastry': 'Butter Braid Pastry', 'Combo': 'Combo', 'Wooden Spoon': 'Wooden Spoon CD',
-            'Joyful Traditions': 'Joyful Tradition', 'Bella Napoli': 'Bella Napoli', 'Croissant Crown': 'Croissant Crowns'}
-PROG_ORDER = ['Butter Braid Pastry', 'Combo', 'Wooden Spoon CD', 'Joyful Tradition', 'Bella Napoli', 'Croissant Crowns', 'Other (review)']
+            'Joyful Traditions': 'Joyful Tradition', 'Bella Napoli': 'Bella Napoli', 'Croissant Crown': 'Croissant Crowns',
+            # Batavia Music Buffs runs all products under its own program (Lynwood, Oct 2026); MFP names it by year.
+            'Batavia Music Buffs 2023': 'Batavia Music Buffs', 'Batavia Music Buffs 2025': 'Batavia Music Buffs'}
+PROG_ORDER = ['Butter Braid Pastry', 'Combo', 'Wooden Spoon CD', 'Joyful Tradition', 'Bella Napoli', 'Croissant Crowns',
+              'Batavia Music Buffs', 'Other (review)']
+# Duplicate MFP group records for the same organization: {duplicate Group ID: Group ID to keep}.
+GROUP_MERGES = {'199961': '84951'}   # St. Paul's Lutheran School (JK) - confirmed same school, Oct 2026
+# Groups whose last owner is no longer a rep: {Group ID: current rep}. Filled in from the location match.
+OWNER_OVERRIDES = {}
+
+for r in R:
+    r['Original Group ID'] = r['Group ID']
+    r['Group ID'] = GROUP_MERGES.get(r['Group ID'], r['Group ID'])
 SEASONS_2025 = ['Spring 2025', 'Fall 2025']
 
 def rep_of(code):
@@ -42,7 +53,7 @@ for r in counted:
     g = r['Group ID']
     if g not in latest or key > latest[g][0]:
         latest[g] = (key, r['Owning User'])
-owner = {g: rep_of(v[1]) for g, v in latest.items()}
+owner = {g: OWNER_OVERRIDES.get(g, rep_of(v[1])) for g, v in latest.items()}
 
 # ---- years each group ran ----
 ran_years = collections.defaultdict(set)
@@ -57,6 +68,8 @@ for r in sorted(counted, key=lambda r: (r['Season'].split()[1], r['Season'].spli
     d = gsp.setdefault(k, {'units': 0.0, 'n': 0, 'codes': set(), 'name': r['Group Name'], 'mfp_prog': set(), 'flags': set()})
     d['units'] += units(r); d['n'] += 1; d['codes'].add(r['Owning User']); d['mfp_prog'].add(r['Program'])
     if r['Status'] == 'Open': d['flags'].add('Includes an Open (invoiced) fundraiser')
+    if r['Original Group ID'] != r['Group ID']: d['flags'].add(f"Merged from duplicate Group ID {r['Original Group ID']}")
+    if r['Group ID'] in OWNER_OVERRIDES: d['flags'].add('Rep assigned by location match')
 
 seen_gs = set()
 detail = []
@@ -95,10 +108,10 @@ lines = [
     ('Retained group', 'A 2025 group is retained if it ran ANY program in EITHER season of 2024. Its units count toward the program it ran in 2025. Decision: Lynwood. 2024 retention is not shown because 2023 was not pulled.'),
     ('Current rep', 'Each group\'s whole history is credited to its current rep = the owning user on its most recent counted fundraiser, after rollups. Decision: Lynwood.'),
     ('Rep rollups', 'BLS -> KJS, LBS -> KJP, LMD -> JMK (from the MFP pull). Current reps: BPR, JK, JMK, KJP, KJS, RB (Lynwood). BJS, GLP and LSS were not assigned, so groups last owned by them show as "Unassigned".'),
-    ('Programs', 'MFP Braided Pastry = Butter Braid Pastry; Combo is its own program (Lynwood). Wooden Spoon -> Wooden Spoon CD, Joyful Traditions -> Joyful Tradition, Croissant Crown -> Croissant Crowns. Anything else -> "Other (review)".'),
+    ('Programs', 'MFP Braided Pastry = Butter Braid Pastry; Combo is its own program; Batavia Music Buffs is its own program and runs all products (Lynwood). Wooden Spoon -> Wooden Spoon CD, Joyful Traditions -> Joyful Tradition, Croissant Crown -> Croissant Crowns. Anything else -> "Other (review)".'),
     ('Prior Year', 'For a 2025 row: same rep, same program, same season in 2024.'),
     ('Read with care', 'Program-level retention can exceed 100%: groups that switch programs still count as retained. The Rep Totals tab is the cleanest retention view.'),
-    ('Group matching', 'Groups are matched on MFP Group ID. Some organizations have two Group IDs in MFP (see Review); those are NOT merged, so a few returning groups may show as new.'),
+    ('Group matching', 'Groups are matched on MFP Group ID. Confirmed duplicates are merged: 199961 -> 84951 (St. Paul\'s Lutheran School, JK). Other same-name IDs are listed on Review and NOT merged.'),
     ('Tabs', 'Rep Program Summary: planner-ready rows (rep x program x season). Rep Totals: per rep per season. Group Detail: one row per group x program x season (the data every formula reads). Review: items to check.'),
 ]
 for i, (a, b) in enumerate(lines, 1):
