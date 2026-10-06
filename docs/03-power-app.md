@@ -188,7 +188,7 @@ If(
 2. **Edit form** `frmPlan`: DataSource `'Program Plans'`, Item `galPlans.Selected`. Fields, in this order:
    - Season, Program
    - Prior Year Units, Prior Year Groups
-   - Growth Goal %, Goal Units Override
+   - Unit Goal, Growth % (if no Unit Goal)
    - Retention %, Avg Units per New Group
    - % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %
 
@@ -200,7 +200,7 @@ If(
    - The Program card's **Update:** `DataCardValue1.Selected`
    - **DisplayMode:** `If(frmPlan.Mode = FormMode.New, DisplayMode.Edit, DisplayMode.View)`. This stops a rep from turning an existing row into a different program by mistake. To switch programs, add a new row.
 3. **Season card:** set the card's **Update** to `{ Id: varSeason.ID, Value: varSeason.Season }` and **Visible** to `false`. The rep never picks a season; it's always the one on the scorecard.
-4. **Percent cards** (Growth Goal %, Retention %, % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
+4. **Percent cards** (Growth %, Retention %, % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
    - The text input's **Default**: `If(IsBlank(Parent.Default), "", Parent.Default * 100)`. With plain `Parent.Default * 100`, a new row starts at 0 instead of blank.
    - The card's **Update**: `Value(<that text input>.Text) / 100`
 5. **Live preview under the form**, so the rep sees the calls needed before saving. Add a label with **Text**:
@@ -208,8 +208,8 @@ If(
    ```powerfx
    With({
        prior:  Value(<Prior Year Units input>.Text),
-       growth: Value(<Growth Goal % input>.Text) / 100,
-       over:   Value(<Goal Units Override input>.Text),
+       growth: Value(<Growth % input>.Text) / 100,
+       over:   Value(<Unit Goal input>.Text),
        ret:    Value(<Retention % input>.Text) / 100,
        avg:    Value(<Avg Units input>.Text),
        share:  Value(<% from In-Person input>.Text) / 100,

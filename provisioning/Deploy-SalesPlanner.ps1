@@ -310,8 +310,8 @@ Rename-Fields $PP @{
     Title                = 'Notes'
     PriorUnits           = 'Prior Year Units'
     PriorGroups          = 'Prior Year Groups'
-    GrowthPct            = 'Growth Goal %'
-    GoalOverride         = 'Goal Units Override'
+    GoalOverride         = 'Unit Goal'
+    GrowthPct            = 'Growth % (if no Unit Goal)'
     RetentionPct         = 'Retention %'
     AvgUnitsPerGroup     = 'Avg Units per New Group'
     DirectSharePct       = "% of New Groups from $DirectLabel"

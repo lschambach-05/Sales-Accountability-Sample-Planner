@@ -73,7 +73,7 @@ The rep is whoever **created** the row ("Created By"). That's also what item-lev
 **How the plan works: backward from the goal.** The rep (or manager) sets the goal and the conversion rates, and the list works out how many calls and contacts the goal takes, then adds a **10% cushion** as the target.
 
 ```
-Sales Goal Units            = Prior Year Units × (1 + Growth Goal %)      (or the Goal Units Override, if filled in)
+Sales Goal Units            = Unit Goal      (or, if Unit Goal is blank, Prior Year Units × (1 + Growth %))
 − Retained Units            = Prior Year Units × Retention %
 = New Units Needed          (never below 0)
 ÷ Avg Units per New Group   = New Groups Needed
@@ -82,7 +82,7 @@ Sales Goal Units            = Prior Year Units × (1 + Growth Goal %)      (or t
 Target = Needed × 1.10, rounded up
 ```
 
-Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units, growth 25% → goal 5,000. Retention 75% → 3,000 retained, so 2,000 new units needed. Avg 250 units per new group → 8 new groups. 60% from direct at a 20% close rate → 24 in-person calls needed, **target 27**. 40% from indirect at 5% → 64 gatekeeper contacts needed, **target 71**.
+Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units, Unit Goal 5,000 (25% growth). Retention 75% → 3,000 retained, so 2,000 new units needed. Avg 250 units per new group → 8 new groups. 60% from direct at a 20% close rate → 24 in-person calls needed, **target 27**. 40% from indirect at 5% → 64 gatekeeper contacts needed, **target 71**.
 
 **Pre-season inputs:**
 
@@ -91,8 +91,8 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 | Season, Program | | 4–5 |
 | Prior Year Units | Same season last year, from the yearly MFP baseline | 7 |
 | Prior Year Groups | Number of groups last year | new |
-| Growth Goal % | How much to grow on last year's units | new |
-| Goal Units Override | Optional. A set unit goal instead of growth %, for example a program the rep didn't sell last year | (row 6) |
+| Unit Goal | The main goal: units to sell this season. Internal name `GoalOverride` | (row 6) |
+| Growth % (if no Unit Goal) | Optional fallback. Used only when Unit Goal is blank: goal = Prior Year Units × (1 + Growth %). Internal name `GrowthPct` | new |
 | Retention % | Share of last year's units expected back from returning groups | 8 |
 | Avg Units per New Group | | 14 |
 | % of New Groups from In-Person | How the new groups are expected to split between direct and indirect | new |
@@ -103,7 +103,7 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 
 | Column | Formula |
 |---|---|
-| Sales Goal Units | Override if filled in, otherwise Prior Year Units × (1 + Growth Goal %) |
+| Sales Goal Units | Unit Goal if filled in, otherwise Prior Year Units × (1 + Growth %) |
 | Plan – Retained Units | Prior Year Units × Retention % |
 | Plan – New Units Needed | Goal − Retained (never below 0) |
 | Plan – New Groups Needed | New Units Needed ÷ Avg Units per New Group |
