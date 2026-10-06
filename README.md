@@ -61,5 +61,5 @@ Times are estimates, not measurements.
 
 ## Status
 
-- **SharePoint setup:** run on the live site (ritebitefundraising.sharepoint.com/sites/SalesPlanner) on October 6, 2026. All four lists were created and the plan formulas checked against a test row.
+- **SharePoint setup:** run on the live site (ritebitefundraising.sharepoint.com/sites/SalesPlanner) on October 6, 2026, then re-run the same day for the backward-from-goal plan, the Daily Activity list and the In-Person / Gatekeeper labels. A test row checked out on the live site: goal 5,000 → 8 new groups → In-Person Calls Target 27 and Gatekeeper Contacts Target 71.
 - **Power App and reminder flows:** not built yet. Their formulas haven't been tested in the tenant, so plan for a short round of fixes when building them.
