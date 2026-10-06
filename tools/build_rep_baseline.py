@@ -24,7 +24,15 @@ PROG_ORDER = ['Butter Braid Pastry', 'Combo', 'Wooden Spoon CD', 'Joyful Traditi
 # Duplicate MFP group records for the same organization: {duplicate Group ID: Group ID to keep}.
 GROUP_MERGES = {'199961': '84951'}   # St. Paul's Lutheran School (JK) - confirmed same school, Oct 2026
 # Groups whose last owner is no longer a rep: {Group ID: current rep}. Filled in from the location match.
-OWNER_OVERRIDES = {}
+OWNER_OVERRIDES = {   # from MFP group locations.csv (Oct 2026): most groups in same city, else same county
+    '163565': 'KJP',  # Troop 1024, Pound WI - city
+    '191059': 'KJS',  # Trail Life IL 2237, Rockford IL - city
+    '191570': 'BPR',  # Lake County Lightning 12u, Hawthorn Woods IL - city
+    '191969': 'BPR',  # Scouts BSA Troop 815, Chicago IL - city
+    '192955': 'KJP',  # New Holstein HS Band/Choir, New Holstein WI - Calumet County
+    '193455': 'KJP',  # Boy Scout Troop 1044, De Pere WI - Brown County
+    '202009': 'KJP',  # Troop 601, Oshkosh WI - city
+}
 
 for r in R:
     r['Original Group ID'] = r['Group ID']
@@ -107,7 +115,7 @@ lines = [
     ('What counts', 'Closed fundraisers, plus Open fundraisers that were invoiced (units sold). Excluded: Canceled, and Open bookings with no units sold (all are well past their delivery date). Decision: Lynwood, 2026-10-06.'),
     ('Retained group', 'A 2025 group is retained if it ran ANY program in EITHER season of 2024. Its units count toward the program it ran in 2025. Decision: Lynwood. 2024 retention is not shown because 2023 was not pulled.'),
     ('Current rep', 'Each group\'s whole history is credited to its current rep = the owning user on its most recent counted fundraiser, after rollups. Decision: Lynwood.'),
-    ('Rep rollups', 'BLS -> KJS, LBS -> KJP, LMD -> JMK (from the MFP pull). Current reps: BPR, JK, JMK, KJP, KJS, RB (Lynwood). BJS, GLP and LSS were not assigned, so groups last owned by them show as "Unassigned".'),
+    ('Rep rollups', 'BLS -> KJS, LBS -> KJP, LMD -> JMK (from the MFP pull). Current reps: BPR, JK, JMK, KJP, KJS, RB (Lynwood). Groups last owned by BJS or LSS were placed with the current rep who has the most groups in the same city, else the same county (Group Detail notes: "Rep assigned by location match").'),
     ('Programs', 'MFP Braided Pastry = Butter Braid Pastry; Combo is its own program; Batavia Music Buffs is its own program and runs all products (Lynwood). Wooden Spoon -> Wooden Spoon CD, Joyful Traditions -> Joyful Tradition, Croissant Crown -> Croissant Crowns. Anything else -> "Other (review)".'),
     ('Prior Year', 'For a 2025 row: same rep, same program, same season in 2024.'),
     ('Read with care', 'Program-level retention can exceed 100%: groups that switch programs still count as retained. The Rep Totals tab is the cleanest retention view.'),
