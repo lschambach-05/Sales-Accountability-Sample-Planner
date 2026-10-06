@@ -21,19 +21,23 @@ This page shows how the old **Accountable Sales Planning Tool** workbook maps on
 
 ### Retention: one definition everywhere
 
-**A group is retained if it ran the previous year.** "Previous year" means the same season one year earlier:
+**A group is retained if it ran any program, in either season, the previous year.** Its units count toward the program it's running *this* season.
 
-| Plan / results for | Prior-year numbers come from |
+Example: a school ran Butter Braid in Spring 2025 and runs Wooden Spoon in Fall 2026. It's a retained group, and its units are retained units on the rep's **Wooden Spoon** row for 2026 Fall.
+
+Each season records which rule its numbers were counted under (**Retention Rule** in the Seasons list). The default is "Any program, either season last year". If you tighten the rule later (for example "Same program, same season last year"), set it on the new seasons. The Plan vs Actual view then shows which seasons aren't directly comparable.
+
+| Column | Meaning |
 |---|---|
-| 2025 Fall | 2024 Fall |
-| 2026 Spring | 2025 Spring |
-| 2026 Fall | 2025 Fall |
+| **Prior Year Units / Prior Year Groups** | That rep's units and number of groups for this program in the **same season** last year (2026 Fall uses 2025 Fall). This is the planning baseline. |
+| **Retained Units** | Units this season from groups that ran last year (per the Retention Rule) |
+| **Retained Groups** | Number of this season's groups that ran last year (per the Retention Rule) |
+| **Unit Retention %** | Retained Units ÷ Prior Year Units. This is the plan's *Retention %* and the actual result |
+| **Group Retention %** | Retained Groups ÷ Prior Year Groups |
 
-- **Prior Year Units / Prior Year Groups:** that rep's units and number of groups for the program in the same season last year.
-- **Retained Units:** units this season from groups that also ran last year.
-- **Retained Groups:** number of groups that ran last year *and* this year.
-- **Unit Retention %** = Retained Units ÷ Prior Year Units. This is the plan's *Retention %* and the actual result.
-- **Group Retention %** = Retained Groups ÷ Prior Year Groups ("18 of last year's 25 groups came back").
+**Read program-level retention with care.** Groups can switch programs and seasons and still count as retained, so a single program's retention % can go **over 100%**. For example, Wooden Spoon picks up schools that ran Butter Braid last year. That's expected. The rep's **total across all programs** is the cleanest retention number.
+
+**Counting retained groups needs group-by-group matching** between this season and last year in MFP. That's only reliable if MFP has a stable group/organization ID (names get typed differently). Check this before trusting the first retention numbers.
 
 The old workbook's actuals section divided retained units by **this** season's total units. That isn't comparable with the plan, so it's been replaced by the definitions above.
 
@@ -48,6 +52,7 @@ The old workbook's actuals section divided retained units by **this** season's t
 | Weeks | Number | Default 20. Used for pace (goal × week ÷ weeks) |
 | Sales Days Goal | Number | The workbook had this per rep. It's now one target per season. If you want it per rep again, it can move to the Reps list |
 | Current Season | Yes/No | The app opens on this season |
+| Retention Rule | Choice | Which rule counted this season's retained groups (default: any program, either season last year) |
 
 ## Reps (managers only)
 

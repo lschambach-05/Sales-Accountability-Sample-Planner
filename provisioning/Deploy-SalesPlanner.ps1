@@ -178,14 +178,23 @@ Add-FieldXml 'Seasons' 'SeasonStart'   '<Field Type="DateTime" Name="SeasonStart
 Add-FieldXml 'Seasons' 'Weeks'         '<Field Type="Number" Name="Weeks" StaticName="Weeks" DisplayName="Weeks" Min="1" Max="52" Decimals="0" Required="TRUE"><Default>20</Default></Field>'
 Add-FieldXml 'Seasons' 'SalesDaysGoal' '<Field Type="Number" Name="SalesDaysGoal" StaticName="SalesDaysGoal" DisplayName="SalesDaysGoal" Min="0" Decimals="0" />'
 Add-FieldXml 'Seasons' 'CurrentSeason' '<Field Type="Boolean" Name="CurrentSeason" StaticName="CurrentSeason" DisplayName="CurrentSeason"><Default>0</Default></Field>'
+# Which rule was used to count retained groups/units for this season, so seasons counted
+# under different rules aren't compared as if they were the same. Add choices here to change the rule.
+Add-FieldXml 'Seasons' 'RetentionRule' ('<Field Type="Choice" Name="RetentionRule" StaticName="RetentionRule" DisplayName="RetentionRule" Format="Dropdown" Required="TRUE">' +
+    '<Default>Any program, either season last year</Default><CHOICES>' +
+    '<CHOICE>Any program, either season last year</CHOICE>' +
+    '<CHOICE>Any program, same season last year</CHOICE>' +
+    '<CHOICE>Same program, same season last year</CHOICE>' +
+    '</CHOICES></Field>')
 Rename-Fields 'Seasons' @{
     Title         = 'Season'
     SeasonStart   = 'Season Start (Monday)'
     Weeks         = 'Weeks'
     SalesDaysGoal = 'Sales Days Goal'
     CurrentSeason = 'Current Season'
+    RetentionRule = 'Retention Rule'
 }
-Set-PnPView -List 'Seasons' -Identity 'All Items' -Fields 'LinkTitle', 'SeasonStart', 'Weeks', 'SalesDaysGoal', 'CurrentSeason' | Out-Null
+Set-PnPView -List 'Seasons' -Identity 'All Items' -Fields 'LinkTitle', 'SeasonStart', 'Weeks', 'SalesDaysGoal', 'CurrentSeason', 'RetentionRule' | Out-Null
 
 if (-not (Get-PnPListItem -List 'Seasons' -PageSize 50)) {
     Add-PnPListItem -List 'Seasons' -Values @{ Title = '2027 Spring'; SeasonStart = [datetime]'2027-01-04'; Weeks = 20 } | Out-Null
@@ -239,8 +248,8 @@ Add-FieldXml $PP 'Season'  "<Field Type=""Lookup"" Name=""Season"" StaticName=""
 Add-FieldXml $PP 'Program' "<Field Type=""Choice"" Name=""Program"" StaticName=""Program"" DisplayName=""Program"" Format=""Dropdown"" Required=""TRUE""><CHOICES>$choices</CHOICES></Field>"
 
 # Pre-season plan inputs (yellow cells on the old Goals tabs).
-# "Prior year" = the same season one year earlier (a 2026 Fall plan uses 2025 Fall numbers).
-# A group is "retained" if it ran the previous year.
+# "Prior year" units/groups = the same season one year earlier (a 2026 Fall plan uses 2025 Fall).
+# Which groups count as "retained" follows the season's Retention Rule (see Seasons list).
 Add-NumberField $PP 'GoalUnits'
 Add-NumberField $PP 'PriorUnits'
 Add-NumberField $PP 'PriorGroups'
