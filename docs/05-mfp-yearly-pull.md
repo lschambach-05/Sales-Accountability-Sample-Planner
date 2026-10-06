@@ -93,7 +93,7 @@ The rules (agreed with Lynwood, October 2026) are set at the top of the script. 
 - **Current reps:** BPR, JK, JMK, KJP, KJS, RB. Rollups: BLS → KJS, LBS → KJP, LMD → JMK. Groups last owned by anyone else show as *Unassigned*.
 - **Each group's history** goes to its current rep: the owner of its most recent counted fundraiser.
 - **What counts:** Closed fundraisers, plus Open ones that were invoiced (units sold). Canceled fundraisers and Open bookings with nothing sold are left out.
-- **Programs:** MFP "Braided Pastry" = Butter Braid Pastry. Combo and Batavia Music Buffs are their own programs.
+- **Programs:** MFP "Braided Pastry" = Butter Braid Pastry. Combo is its own program. Batavia Music Buffs is one group, not a planner program.
 - **Duplicate groups:** listed in `GROUP_MERGES`. **Placed groups:** listed in `OWNER_OVERRIDES`.
 - **Retained:** the group ran any program, in either season, the previous year.
 
