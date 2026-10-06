@@ -17,10 +17,11 @@ CURRENT = ['BPR', 'JK', 'JMK', 'KJP', 'KJS', 'RB']
 ROLLUP = {'BLS': 'KJS', 'LBS': 'KJP', 'LMD': 'JMK'}
 PROGRAMS = {'Braided Pastry': 'Butter Braid Pastry', 'Combo': 'Combo', 'Wooden Spoon': 'Wooden Spoon CD',
             'Joyful Traditions': 'Joyful Tradition', 'Bella Napoli': 'Bella Napoli', 'Croissant Crown': 'Croissant Crowns',
-            # Batavia Music Buffs runs all products under its own program (Lynwood, Oct 2026); MFP names it by year.
-            'Batavia Music Buffs 2023': 'Batavia Music Buffs', 'Batavia Music Buffs 2025': 'Batavia Music Buffs'}
+            # Batavia Music Buffs is one group that runs all products; MFP names its program by year.
+            # It is not a planner program, so its units count under Combo (Lynwood, Oct 2026).
+            'Batavia Music Buffs 2023': 'Combo', 'Batavia Music Buffs 2025': 'Combo'}
 PROG_ORDER = ['Butter Braid Pastry', 'Combo', 'Wooden Spoon CD', 'Joyful Tradition', 'Bella Napoli', 'Croissant Crowns',
-              'Batavia Music Buffs', 'Other (review)']
+              'Other (review)']
 # Duplicate MFP group records for the same organization: {duplicate Group ID: Group ID to keep}.
 GROUP_MERGES = {'199961': '84951'}   # St. Paul's Lutheran School (JK) - confirmed same school, Oct 2026
 # Groups whose last owner is no longer a rep: {Group ID: current rep}. Filled in from the location match.
@@ -116,7 +117,7 @@ lines = [
     ('Retained group', 'A 2025 group is retained if it ran ANY program in EITHER season of 2024. Its units count toward the program it ran in 2025. Decision: Lynwood. 2024 retention is not shown because 2023 was not pulled.'),
     ('Current rep', 'Each group\'s whole history is credited to its current rep = the owning user on its most recent counted fundraiser, after rollups. Decision: Lynwood.'),
     ('Rep rollups', 'BLS -> KJS, LBS -> KJP, LMD -> JMK (from the MFP pull). Current reps: BPR, JK, JMK, KJP, KJS, RB (Lynwood). Groups last owned by BJS or LSS were placed with the current rep who has the most groups in the same city, else the same county (Group Detail notes: "Rep assigned by location match").'),
-    ('Programs', 'MFP Braided Pastry = Butter Braid Pastry; Combo is its own program; Batavia Music Buffs is its own program and runs all products (Lynwood). Wooden Spoon -> Wooden Spoon CD, Joyful Traditions -> Joyful Tradition, Croissant Crown -> Croissant Crowns. Anything else -> "Other (review)".'),
+    ('Programs', 'MFP Braided Pastry = Butter Braid Pastry; Combo is its own program; Batavia Music Buffs (one group that runs all products) counts under Combo (Lynwood). Wooden Spoon -> Wooden Spoon CD, Joyful Traditions -> Joyful Tradition, Croissant Crown -> Croissant Crowns. Anything else -> "Other (review)".'),
     ('Prior Year', 'For a 2025 row: same rep, same program, same season in 2024.'),
     ('Read with care', 'Program-level retention can exceed 100%: groups that switch programs still count as retained. The Rep Totals tab is the cleanest retention view.'),
     ('Group matching', 'Groups are matched on MFP Group ID. Confirmed duplicates are merged: 199961 -> 84951 (St. Paul\'s Lutheran School, JK). Other same-name IDs are listed on Review and NOT merged.'),
