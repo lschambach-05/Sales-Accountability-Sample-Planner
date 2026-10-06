@@ -1,0 +1,117 @@
+# 2. Data model and formulas
+
+This page shows how the old **Accountable Sales Planning Tool** workbook maps onto the new lists, so the math stays recognizable.
+
+## Big changes from the workbook
+
+| Workbook | New system | Why |
+|---|---|---|
+| One file per rep | One site; each rep sees only their own rows | Managers get a team view without opening 6 files |
+| Separate Fall / Spring tabs, "2027" typed into 100+ formulas | **Season** is a dropdown that pulls from the Seasons list | A new year is one new row; nothing is rebuilt |
+| Daily call entry (100 cells per season) | **Weekly** check-in | Daily detail was only used to count sales days, so reps now enter sales days directly |
+| One "in-person calls" number | **Direct calls** and **indirect contacts** logged separately, plus new groups booked by each | In-season results can be compared with the plan's direct/indirect goals |
+| Post-season actuals on the Goals tab | Same row as the plan, in **Program Plans** | Plan vs actual sit side by side |
+
+### Workbook bugs that go away
+
+1. **Fall Retained Units** were typed in as 0 on Fall Goals but calculated on Spring Goals. Now they're always calculated.
+2. The Dashboard **Sales Days** tile compared the season name with the wrong cell (`'Fall Goals'!H5`), so it always showed Spring. Seasons are now looked up by ID.
+3. **Two different goals:** the Dashboard used *Sales Goal Units* while the Annual Summary used *Projected Total Units*. Now **Sales Goal Units is the target** everywhere. Projected Units is shown as "Plan – % of Goal Covered", a check on whether the activity plan adds up to the goal.
+4. The hidden **Metrics** tab was all `#REF!` errors. It's gone.
+
+### One definition changed: retention
+
+- In the workbook's **plan** section, *Retention %* = retained units ÷ **prior** season units.
+- In its **actuals** section, *Unit Retention %* = retained units ÷ **this** season's total units.
+
+That's a different measure under the same name, so plan vs actual retention wasn't comparable. The new **Actual – Retention % of Prior** uses the same definition as the plan (retained ÷ prior). If you'd rather keep the old actuals definition as well, it's a one-column addition.
+
+---
+
+## Seasons (managers maintain)
+
+| Column | Type | Notes |
+|---|---|---|
+| Season | Text | For example "2027 Fall". Shown in every dropdown |
+| Season Start (Monday) | Date | Week 1 starts here |
+| Weeks | Number | Default 20. Used for pace (goal × week ÷ weeks) |
+| Sales Days Goal | Number | The workbook had this per rep. It's now one target per season. If you want it per rep again, it can move to the Reps list |
+| Current Season | Yes/No | The app opens on this season |
+
+## Reps (managers only)
+
+| Column | Type |
+|---|---|
+| Rep Name | Text |
+| Rep | Person (their M365 account) |
+| MFP Owning User Code | Text (BLS, KJS, …) |
+| Active | Yes/No. Untick when someone leaves; their history stays |
+
+## Program Plans (one row per rep × season × program)
+
+The rep is whoever **created** the row ("Created By"). That's also what item-level security uses.
+
+**Pre-season inputs** (the yellow cells):
+
+| Column | Workbook row |
+|---|---|
+| Season, Program | row 4–5 |
+| Sales Goal Units | row 6 |
+| Prior Sales Units | row 7 |
+| Retention % | row 8 |
+| Direct Calls Goal | row 10 |
+| Direct Close % | row 11 |
+| Indirect Contacts Goal | row 12 |
+| Indirect Close % | row 13 |
+| Avg Units per New Group | row 14 |
+
+**Calculated:**
+
+| Column | Formula | Workbook row |
+|---|---|---|
+| Plan – Retained Units | Prior × Retention % | 9 |
+| Plan – Direct New Groups | Direct Calls Goal × Direct Close % | 15 |
+| Plan – Indirect New Groups | Indirect Contacts Goal × Indirect Close % | 16 |
+| Plan – New Groups | Direct + Indirect new groups | 17 |
+| Plan – New Units | New Groups × Avg Units per New Group | 18 |
+| Plan – Projected Total Units | Retained + New Units | 19 |
+| Plan – % of Goal Covered | Projected ÷ Sales Goal Units | 20 |
+
+**Post-season inputs:** Actual – Total Units, Retained Units, Retained Groups, Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings (workbook rows 22–24, 28–29, 31–32).
+
+**Post-season calculated:**
+
+| Column | Formula |
+|---|---|
+| Actual – Attainment % | Actual Total ÷ Sales Goal Units |
+| Actual – Retention % of Prior | Actual Retained ÷ Prior Sales Units |
+| Actual – New Units | Total − Retained |
+| Actual – New Groups | Direct + Indirect bookings |
+| Actual – Direct / Indirect Close % | Bookings ÷ calls (or contacts) |
+| Actual – Avg Units per New Group | New Units ÷ New Groups |
+| Actual – Avg Units per Retained Group | Retained Units ÷ Retained Groups |
+
+All divisions return 0 instead of an error when the bottom number is 0.
+
+**Percent columns:** in SharePoint these are stored as fractions (85% = 0.85). When you first test, check whether the list form wants **85** or **0.85** typed in. The Power App handles this for reps (see page 3).
+
+## Weekly Check-ins (one row per rep × week)
+
+| Column | Notes |
+|---|---|
+| Season | Lookup to Seasons |
+| Week Ending (Friday) | |
+| Direct Calls | In-person direct sales calls this week |
+| Indirect Contacts | Indirect contacts this week |
+| Sales Days | Days this week with at least one sales call (0–5) |
+| New Groups Booked – Direct / Indirect | Optional, but makes the in-season close rate visible |
+| MFP Units Season-to-Date | Cumulative number from the MFP dashboard (same as the old "Weekly Sales Results" yellow column) |
+| Notes | Wins, blockers |
+
+**In-season scorecard math** (done in the app):
+
+- Current week = weeks since Season Start + 1 (never more than Weeks)
+- Pace for any goal = goal × current week ÷ Weeks (same straight-line pace as the workbook)
+- Units to date = MFP Units Season-to-Date from the most recent check-in
+- Calls / contacts / sales days = sums of the season's check-ins
+- Direct calls goal = sum of Direct Calls Goal across the rep's program rows (same as workbook cell G10)
