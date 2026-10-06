@@ -289,23 +289,20 @@ Add-CalcField $PP 'DirectCallsTarget'  "=ROUNDUP($dirNeed*$buffer,0)" ($newRefs 
 Add-CalcField $PP 'IndirectNeeded'     "=ROUNDUP($indNeed,0)"       ($newRefs + @('DirectSharePct', 'IndirectClosePct'))
 Add-CalcField $PP 'IndirectTarget'     "=ROUNDUP($indNeed*$buffer,0)" ($newRefs + @('DirectSharePct', 'IndirectClosePct'))
 
-# Post-season actuals (old Goals tabs rows 22-35)
+# Post-season actuals, per program, from the yearly MFP pull (old Goals tabs rows 22-35).
+# Actual close rates are NOT per program: they come from the Daily Activity log over a rolling
+# 12 months (calls and bookings across both seasons), which the app shows per rep.
 Add-NumberField $PP 'ActTotalUnits'
+Add-NumberField $PP 'ActTotalGroups'
 Add-NumberField $PP 'ActRetainedUnits'
 Add-NumberField $PP 'ActRetainedGroups'
-Add-NumberField $PP 'ActDirectCalls'
-Add-NumberField $PP 'ActDirectBookings'
-Add-NumberField $PP 'ActIndirectContacts'
-Add-NumberField $PP 'ActIndirectBookings'
 
 Add-CalcField $PP 'ActAttainment'       "=IF($goal=0,0,[ActTotalUnits]/$goal)"                             ($goalRefs + @('ActTotalUnits')) -Decimals 1 -Percent
 Add-CalcField $PP 'ActRetentionPct'     '=IF([PriorUnits]=0,0,[ActRetainedUnits]/[PriorUnits])'            @('PriorUnits', 'ActRetainedUnits') -Decimals 1 -Percent
 Add-CalcField $PP 'ActGroupRetentionPct' '=IF([PriorGroups]=0,0,[ActRetainedGroups]/[PriorGroups])'          @('PriorGroups', 'ActRetainedGroups') -Decimals 1 -Percent
 Add-CalcField $PP 'ActNewUnits'         '=[ActTotalUnits]-[ActRetainedUnits]'                              @('ActTotalUnits', 'ActRetainedUnits')
-Add-CalcField $PP 'ActNewGroups'        '=[ActDirectBookings]+[ActIndirectBookings]'                       @('ActDirectBookings', 'ActIndirectBookings')
-Add-CalcField $PP 'ActDirectClosePct'   '=IF([ActDirectCalls]=0,0,[ActDirectBookings]/[ActDirectCalls])'   @('ActDirectCalls', 'ActDirectBookings') -Decimals 1 -Percent
-Add-CalcField $PP 'ActIndirectClosePct' '=IF([ActIndirectContacts]=0,0,[ActIndirectBookings]/[ActIndirectContacts])' @('ActIndirectContacts', 'ActIndirectBookings') -Decimals 1 -Percent
-Add-CalcField $PP 'ActNewGroupAvg'      '=IF(([ActDirectBookings]+[ActIndirectBookings])=0,0,([ActTotalUnits]-[ActRetainedUnits])/([ActDirectBookings]+[ActIndirectBookings]))' @('ActTotalUnits', 'ActRetainedUnits', 'ActDirectBookings', 'ActIndirectBookings') -Decimals 1
+Add-CalcField $PP 'ActNewGroups'        '=[ActTotalGroups]-[ActRetainedGroups]'                            @('ActTotalGroups', 'ActRetainedGroups')
+Add-CalcField $PP 'ActNewGroupAvg'      '=IF(([ActTotalGroups]-[ActRetainedGroups])=0,0,([ActTotalUnits]-[ActRetainedUnits])/([ActTotalGroups]-[ActRetainedGroups]))' @('ActTotalUnits', 'ActRetainedUnits', 'ActTotalGroups', 'ActRetainedGroups') -Decimals 1
 Add-CalcField $PP 'ActRetainedGroupAvg' '=IF([ActRetainedGroups]=0,0,[ActRetainedUnits]/[ActRetainedGroups])' @('ActRetainedUnits', 'ActRetainedGroups') -Decimals 1
 
 $bufferLabel = [math]::Round($CallBuffer * 100).ToString() + '%'
@@ -329,19 +326,14 @@ Rename-Fields $PP @{
     IndirectNeeded       = "$IndirectLabel Contacts Needed"
     IndirectTarget       = "$IndirectLabel Contacts Target"  # needed + call buffer ($bufferLabel)
     ActTotalUnits        = 'Actual - Total Units'
+    ActTotalGroups       = 'Actual - Total Groups'
     ActRetainedUnits     = 'Actual - Retained Units (ran last year)'
     ActRetainedGroups    = 'Actual - Retained Groups (ran last year)'
-    ActDirectCalls       = "Actual - $DirectLabel Calls"
-    ActDirectBookings    = "Actual - $DirectLabel Bookings"
-    ActIndirectContacts  = "Actual - $IndirectLabel Contacts"
-    ActIndirectBookings  = "Actual - $IndirectLabel Bookings"
     ActAttainment        = 'Actual - Attainment %'
     ActRetentionPct      = 'Actual - Unit Retention %'
     ActGroupRetentionPct = 'Actual - Group Retention %'
     ActNewUnits          = 'Actual - New Units'
     ActNewGroups         = 'Actual - New Groups'
-    ActDirectClosePct    = "Actual - $DirectLabel Close %"
-    ActIndirectClosePct  = "Actual - $IndirectLabel Close %"
     ActNewGroupAvg       = 'Actual - Avg Units per New Group'
     ActRetainedGroupAvg  = 'Actual - Avg Units per Retained Group'
 }
@@ -353,7 +345,8 @@ Add-ViewIfMissing $PP 'By Rep' (@('Author') + $planFields) `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Author" /><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="PriorUnits" Type="SUM" />'
 Add-ViewIfMissing $PP 'Plan vs Actual' @('Author', 'Season', 'Program', 'GoalUnits', 'ActTotalUnits', 'ActAttainment',
-                                         'RetentionPct', 'ActRetentionPct', 'PriorGroups', 'ActRetainedGroups', 'ActGroupRetentionPct', 'DirectClosePct', 'ActDirectClosePct', 'IndirectClosePct', 'ActIndirectClosePct') `
+                                         'RetentionPct', 'ActRetentionPct', 'PriorGroups', 'ActRetainedGroups', 'ActGroupRetentionPct',
+                                         'PlanNewGroups', 'ActNewGroups', 'AvgUnitsPerGroup', 'ActNewGroupAvg', 'DirectClosePct', 'IndirectClosePct') `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Author" /><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="ActTotalUnits" Type="SUM" />'
 

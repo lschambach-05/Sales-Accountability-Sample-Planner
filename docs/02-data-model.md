@@ -112,7 +112,7 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 
 The cushion is a setting in the setup script (`-CallBuffer 0.10`). Changing it later means editing the two Target formulas in the list's column settings.
 
-**Post-season inputs:** Actual – Total Units, Retained Units (ran last year), Retained Groups (ran last year), Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings (workbook rows 22–24, 28–29, 31–32).
+**Post-season inputs** (per program, filled from the yearly MFP pull rather than typed by reps): Actual – Total Units, Total Groups, Retained Units (ran last year), Retained Groups (ran last year). These were workbook rows 22–24.
 
 **Post-season calculated:**
 
@@ -122,12 +122,13 @@ The cushion is a setting in the setup script (`-CallBuffer 0.10`). Changing it l
 | Actual – Unit Retention % | Actual Retained Units ÷ Prior Year Units |
 | Actual – Group Retention % | Actual Retained Groups ÷ Prior Year Groups |
 | Actual – New Units | Total − Retained |
-| Actual – New Groups | Direct + Indirect bookings |
-| Actual – Direct / Indirect Close % | Bookings ÷ calls (or contacts) |
+| Actual – New Groups | Total Groups − Retained Groups |
 | Actual – Avg Units per New Group | New Units ÷ New Groups |
 | Actual – Avg Units per Retained Group | Retained Units ÷ Retained Groups |
 
 All divisions return 0 instead of an error when the bottom number is 0.
+
+**Actual close rates are measured per rep over a full year, not per program or per season.** A call made in spring can book a group that runs in fall, so a one-season close rate would be too low in one season and too high in the next. The app counts all of a rep's calls and bookings from the Daily Activity log over the **last 12 months**, across both seasons. That's the realistic number to compare with the plan's close rates, and to use when setting next season's plan. Bookings are logged on the day they happen, and MFP decides which season the group's units count in.
 
 **Percent columns:** in the list forms, type **50** for 50%. This was confirmed on the live site in October 2026: Retention 50 on 800 prior units gave 400 retained. SharePoint stores the value as a fraction (0.5), and that's what Power Apps and Power Automate read, which is why the Power App percent fields multiply and divide by 100 (see page 3).
 
@@ -152,5 +153,5 @@ Reps only log days they sell, so a week with no selling is simply a week with no
 - Progress = done ÷ target (target = the +10% numbers, summed across the rep's program rows)
 - Remaining = target − done; per selling day left = remaining ÷ (Sales Days Goal − sales days so far)
 - Units to date = the most recent MFP Units Season-to-Date entry, compared with Sales Goal Units
-- Close rate so far = bookings ÷ calls (or contacts), compared with the plan's close rates. A rate falling short of plan means more calls are needed than the target says
+- Close rates = bookings ÷ calls (or contacts) over the **last 12 months**, compared with the plan's close rates. A rate falling short of plan means more calls are needed than the target says
 - Season elapsed % (today vs. Season Start and Weeks) is shown for reference only. Selling comes in bursts, so there is no week-by-week pace

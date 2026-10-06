@@ -15,7 +15,7 @@ Column names below use the default labels **Direct** and **Indirect**. If you ch
 
 | Screen | Who | What it does |
 |---|---|---|
-| **scrHome** – My Scorecard | Everyone | Season picker; units vs goal; direct calls, indirect contacts and sales days vs target; new groups booked vs needed |
+| **scrHome** – My Scorecard | Everyone | Season picker; units vs goal; direct calls, indirect contacts and sales days vs target; new groups booked vs needed; close rates over the last 12 months |
 | **scrLog** – Log a Day | Everyone | One quick form per selling day. Re-opening the same date edits that day instead of duplicating it |
 | **scrPlan** – My Plan | Everyone | Goal, retention and conversion rates per program. Shows the calls and contacts each program needs |
 | **scrResults** – Season Results | Everyone | Post-season actuals per program |
@@ -55,6 +55,14 @@ ClearCollect(colMyDays,
         Filter('Daily Activity', Season.Id = varSeason.ID && 'Created By'.Email = User().Email),
         'Activity Date', SortOrder.Descending));
 
+// Last 12 months of activity, across seasons, for realistic close rates
+// (a spring call can book a fall group)
+ClearCollect(colMyYear,
+    Filter('Daily Activity', 'Created By'.Email = User().Email &&
+        'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
+Set(varDirClose12, IfError(Sum(colMyYear, 'New Groups Booked - Direct') / Sum(colMyYear, 'Direct Calls'), 0));
+Set(varIndClose12, IfError(Sum(colMyYear, 'New Groups Booked - Indirect') / Sum(colMyYear, 'Indirect Contacts'), 0));
+
 // Totals used by the tiles
 Set(varGoal,          Sum(colMyPlans, 'Sales Goal Units'));
 Set(varDirectTarget,  Sum(colMyPlans, 'Direct Calls Target'));
@@ -76,6 +84,7 @@ Set(varDaysLeft, Max(1, Coalesce(varSeason.'Sales Days Goal', 0) - varSalesDays)
 If(varIsManager,
     ClearCollect(colAllPlans, Filter('Program Plans',  Season.Id = varSeason.ID));
     ClearCollect(colAllDays,  Filter('Daily Activity', Season.Id = varSeason.ID));
+    ClearCollect(colAllYear,  Filter('Daily Activity', 'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
     ClearCollect(colReps,     Filter(Reps, Active = true))
 );
 ```
@@ -90,7 +99,7 @@ If(varIsManager,
 
 **Header line:** `varSeason.Season & " · " & Text(varElapsed, "0%") & " of the season gone"`
 
-**Tiles.** Add five tiles (a rectangle plus labels). The text formulas:
+**Tiles.** Add six tiles (a rectangle plus labels). The text formulas:
 
 | Tile | Big number | Small line |
 |---|---|---|
@@ -98,7 +107,8 @@ If(varIsManager,
 | Direct calls | `varDirectDone & " / " & varDirectTarget` | `Max(0, varDirectTarget - varDirectDone) & " to go · about " & RoundUp(Max(0, varDirectTarget - varDirectDone) / varDaysLeft, 0) & " per selling day"` |
 | Indirect contacts | `varIndDone & " / " & varIndTarget` | `Max(0, varIndTarget - varIndDone) & " to go · about " & RoundUp(Max(0, varIndTarget - varIndDone) / varDaysLeft, 0) & " per selling day"` |
 | Sales days | `varSalesDays & " / " & Coalesce(varSeason.'Sales Days Goal', 0)` | `"selling days logged"` |
-| New groups | `varBooked & " / " & RoundUp(varGroupsNeeded, 0)` | `"booked of needed · close rate so far " & Text(IfError(varBooked / (varDirectDone + varIndDone), 0), "0%")` |
+| New groups | `varBooked & " / " & RoundUp(varGroupsNeeded, 0)` | `"booked of needed this season"` |
+| Close rates (12 months) | `Text(varDirClose12, "0%") & " direct · " & Text(varIndClose12, "0%") & " indirect"` | `"plan: " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * '% of New Groups from Direct') / Sum(colMyPlans, 'Direct Calls Needed'), 0), "0%") & " · " & Text(IfError(Sum(colMyPlans, 'Plan - New Groups Needed' * (1 - '% of New Groups from Direct')) / Sum(colMyPlans, 'Indirect Contacts Needed'), 0), "0%")` |
 
 **Progress bars (optional, nice on a phone).** Under each activity tile, add a grey rectangle the full width, and on top of it a coloured rectangle with **Width**:
 
@@ -106,7 +116,7 @@ If(varIsManager,
 Parent.Width * Min(1, IfError(varDirectDone / varDirectTarget, 0))      // use the matching numbers for each tile
 ```
 
-There's deliberately **no red/amber "behind pace" colour**. Selling comes in bursts, so being at 20% of target halfway through the season can be fine. Compare the progress bar with the "% of the season gone" in the header, and look at the **New groups** tile. If bookings lag behind what's needed while calls are on target, the close rate is below plan and more calls will be needed.
+There's deliberately **no red/amber "behind pace" colour**. Selling comes in bursts, so being at 20% of target halfway through the season can be fine. Compare the progress bar with the "% of the season gone" in the header, and look at the **New groups** and **Close rates** tiles. If the 12-month close rates are below plan, the targets are too low and more calls will be needed. Close rates use a full year because a spring call can book a fall group, so one season alone is misleading.
 
 **Buttons:** "Log a Day" → `Navigate(scrLog)`, "My Plan" → `Navigate(scrPlan)`, "Season Results" → `Navigate(scrResults)`, "Team" → `Navigate(scrTeam)` with **Visible** = `varIsManager`.
 
@@ -219,14 +229,20 @@ If(
 
 ## 5. scrResults – Season Results
 
-Copy scrPlan (right-click → Duplicate screen) and change the form fields to the **Actual –** input columns: Total Units, Retained Units (ran last year), Retained Groups (ran last year), Direct Calls, Direct Bookings, Indirect Contacts, Indirect Bookings. Remove the "Add program" button and the live preview, because results go on the existing plan rows.
+Copy scrPlan (right-click → Duplicate screen) and change the form fields to the **Actual –** input columns: Total Units, Total Groups, Retained Units (ran last year), Retained Groups (ran last year). Remove the "Add program" button and the live preview, because results go on the existing plan rows. Normally these are filled from the yearly MFP pull, so this screen is mostly for viewing and correcting.
 
 Gallery row text:
 
 ```powerfx
-ThisItem.Program.Value & ": " & Text(ThisItem.'Actual - Attainment %', "0%") & " of goal · direct close " &
-Text(ThisItem.'Actual - Direct Close %', "0%") & " (plan " & Text(ThisItem.'Direct Close %', "0%") & ")" &
-" · groups back " & Text(ThisItem.'Actual - Group Retention %', "0%")
+ThisItem.Program.Value & ": " & Text(ThisItem.'Actual - Attainment %', "0%") & " of goal · retention " &
+Text(ThisItem.'Actual - Unit Retention %', "0%") & " (plan " & Text(ThisItem.'Retention %', "0%") & ")" &
+" · " & ThisItem.'Actual - New Groups' & " new groups (plan " & RoundUp(ThisItem.'Plan - New Groups Needed', 0) & ")"
+```
+
+Add a line under the gallery for the close rates, which cover the rep overall rather than each program:
+
+```powerfx
+"Close rates, last 12 months: " & Text(varDirClose12, "0%") & " direct · " & Text(varIndClose12, "0%") & " indirect"
 ```
 
 ## 6. scrTeam – Team (managers)
@@ -239,7 +255,8 @@ Sort(
         With({
             p: Filter(colAllPlans, Lower('Created By'.Email) = Lower(r.Rep.Email)),
             d: Sort(Filter(colAllDays, Lower('Created By'.Email) = Lower(r.Rep.Email)),
-                    'Activity Date', SortOrder.Descending)
+                    'Activity Date', SortOrder.Descending),
+            y: Filter(colAllYear, Lower('Created By'.Email) = Lower(r.Rep.Email))
         },
         {
             RepName:      r.'Rep Name',
@@ -254,6 +271,8 @@ Sort(
             Needed:       RoundUp(Sum(p, 'Plan - New Groups Needed'), 0),
             SalesDays:    Sum(d, 'Sales Day'),
             LastDay:      First(d).'Activity Date',
+            DirClose12:   IfError(Sum(y, 'New Groups Booked - Direct') / Sum(y, 'Direct Calls'), 0),
+            IndClose12:   IfError(Sum(y, 'New Groups Booked - Indirect') / Sum(y, 'Indirect Contacts'), 0),
             HasPlan:      CountRows(p) > 0
         })
     ),
@@ -267,6 +286,7 @@ Labels in each row:
 - `Text(IfError(ThisItem.Units / ThisItem.Goal, 0), "0%") & " of " & ThisItem.Goal & " units"`
 - `"Direct " & ThisItem.DirectDone & " / " & ThisItem.DirectTarget & " · Indirect " & ThisItem.IndDone & " / " & ThisItem.IndTarget`
 - `"Groups " & ThisItem.Booked & " / " & ThisItem.Needed & " · " & ThisItem.SalesDays & " selling days · last " & If(IsBlank(ThisItem.LastDay), "never", Text(ThisItem.LastDay, "mmm d"))`
+- `"Close (12 mo) " & Text(ThisItem.DirClose12, "0%") & " direct · " & Text(ThisItem.IndClose12, "0%") & " indirect"`
 - A red "No plan yet" label with **Visible** `!ThisItem.HasPlan`
 
 Team totals across the top: `Sum(galTeam.AllItems, Units)`, `Sum(galTeam.AllItems, Goal)`, and so on.
