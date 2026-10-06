@@ -120,13 +120,13 @@ There's deliberately **no red/amber "behind pace" colour**. Selling comes in bur
 
 **Buttons:** "Log a Day" → `Navigate(scrLog)`, "My Plan" → `Navigate(scrPlan)`, "Season Results" → `Navigate(scrResults)`, "Team" → `Navigate(scrTeam)` with **Visible** = `varIsManager`.
 
-**Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'In-Person Calls' & " in-person, " & ThisItem.'Gatekeeper Contacts' & " gatekeeper"`. Selecting a row: `Set(varPickDate, ThisItem.'Activity Date'); Navigate(scrLog)`.
+**Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'In-Person Calls' & " in-person, " & ThisItem.'Gatekeeper Contacts' & " gatekeeper"`. (Display only. To edit an earlier day, the rep opens Log a Day and picks that date.)
 
 ## 3. scrLog – Log a Day
 
 Controls: a date picker `dpDate`; text inputs (Format = Number) `txtDirect`, `txtIndirect`, `txtDirBook`, `txtIndBook`, `txtUnits`; and a multi-line text input `txtNotes`.
 
-**dpDate.DefaultDate:** `Coalesce(varPickDate, Today())`
+**dpDate.DefaultDate:** `Today()`
 
 **scrLog.OnVisible** and **dpDate.OnChange** (same formula): load that day's row if it already exists:
 
@@ -171,7 +171,6 @@ If(
             }),
         Notify("Couldn't save: " & FirstError.Message, NotificationType.Error),
         Notify("Day logged. Nice work!", NotificationType.Success);
-        Set(varPickDate, Blank());
         Navigate(scrHome)
     )
 )
