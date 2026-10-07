@@ -338,7 +338,7 @@ Rename-Fields $PP @{
     ActRetainedGroupAvg  = 'Actual - Avg Units per Retained Group'
 }
 
-$planFields = 'Season', 'Program', 'PriorUnits', 'GrowthPct', 'GoalUnits', 'RetentionPct', 'PlanNewUnits', 'PlanNewGroups',
+$planFields = 'Season', 'Program', 'PriorUnits', 'GoalOverride', 'GrowthPct', 'GoalUnits', 'RetentionPct', 'PlanNewUnits', 'PlanNewGroups',
               'DirectSharePct', 'DirectClosePct', 'IndirectClosePct', 'DirectCallsTarget', 'IndirectTarget'
 Set-PnPView -List $PP -Identity 'All Items' -Fields $planFields | Out-Null
 Add-ViewIfMissing $PP 'By Rep' (@('Author') + $planFields) `
