@@ -44,7 +44,9 @@ param(
     [string[]] $RepEmails = @(),
     # Extra calls/contacts on top of what the math says is needed (0.10 = 10%).
     [double]   $CallBuffer = 0.10,
-    # Labels for the two kinds of sales activity. Change them here and re-run to rename the columns.
+    # Since October 2026 there is one kind of activity, "Sales Calls" (the Direct* columns). The
+    # Indirect* (gatekeeper) columns stay in the lists, unused: the app saves them as 0 and plans
+    # put 100% of new groups on sales calls. These labels only name those leftover columns.
     [string]   $DirectLabel = 'In-Person',
     [string]   $IndirectLabel = 'Gatekeeper',
     [string[]] $Programs = @(
@@ -316,14 +318,14 @@ Rename-Fields $PP @{
     RetentionPct         = 'Retention %'
     AvgUnitsPerGroup     = 'Avg Units per New Group'
     DirectSharePct       = "% of New Groups from $DirectLabel"
-    DirectClosePct       = "$DirectLabel Close %"
+    DirectClosePct       = 'Sales Call Close %'
     IndirectClosePct     = "$IndirectLabel Close %"
     GoalUnits            = 'Sales Goal Units'
     PlanRetainedUnits    = 'Plan - Retained Units'
     PlanNewUnits         = 'Plan - New Units Needed'
     PlanNewGroups        = 'Plan - New Groups Needed'
-    DirectCallsNeeded    = "$DirectLabel Calls Needed"
-    DirectCallsTarget    = "$DirectLabel Calls Target"     # needed + call buffer ($bufferLabel)
+    DirectCallsNeeded    = 'Sales Calls Needed'
+    DirectCallsTarget    = 'Sales Calls Target'     # needed + call buffer ($bufferLabel)
     IndirectNeeded       = "$IndirectLabel Contacts Needed"
     IndirectTarget       = "$IndirectLabel Contacts Target"  # needed + call buffer ($bufferLabel)
     ActTotalUnits        = 'Actual - Total Units'
@@ -340,14 +342,14 @@ Rename-Fields $PP @{
 }
 
 $planFields = 'Season', 'Program', 'PriorUnits', 'GoalOverride', 'GrowthPct', 'GoalUnits', 'RetentionPct', 'PlanNewUnits', 'PlanNewGroups',
-              'DirectSharePct', 'DirectClosePct', 'IndirectClosePct', 'DirectCallsTarget', 'IndirectTarget'
+              'DirectClosePct', 'DirectCallsTarget'
 Set-PnPView -List $PP -Identity 'All Items' -Fields $planFields | Out-Null
 Add-ViewIfMissing $PP 'By Rep' (@('Author') + $planFields) `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Author" /><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="PriorUnits" Type="SUM" />'
 Add-ViewIfMissing $PP 'Plan vs Actual' @('Author', 'Season', 'Program', 'GoalUnits', 'ActTotalUnits', 'ActAttainment',
                                          'RetentionPct', 'ActRetentionPct', 'PriorGroups', 'ActRetainedGroups', 'ActGroupRetentionPct',
-                                         'PlanNewGroups', 'ActNewGroups', 'AvgUnitsPerGroup', 'ActNewGroupAvg', 'DirectClosePct', 'IndirectClosePct') `
+                                         'PlanNewGroups', 'ActNewGroups', 'AvgUnitsPerGroup', 'ActNewGroupAvg', 'DirectClosePct') `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Author" /><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="ActTotalUnits" Type="SUM" />'
 
@@ -375,16 +377,16 @@ Add-CalcField $DA 'SalesDay' '=IF([DirectCalls]+[IndirectContacts]>0,1,0)' @('Di
 
 Rename-Fields $DA @{
     ActivityDate     = 'Activity Date'
-    DirectCalls      = "$DirectLabel Calls"
+    DirectCalls      = 'Sales Calls'
     IndirectContacts = "$IndirectLabel Contacts"
-    DirectBookings   = "New Groups Booked - $DirectLabel"
+    DirectBookings   = 'New Groups'
     IndirectBookings = "New Groups Booked - $IndirectLabel"
     MFPUnitsToDate   = 'MFP Units Season-to-Date'
     DayNotes         = 'Notes'
     SalesDay         = 'Sales Day'
 }
 
-$daFields = 'Season', 'ActivityDate', 'DirectCalls', 'IndirectContacts', 'DirectBookings', 'IndirectBookings', 'MFPUnitsToDate', 'SalesDay', 'DayNotes'
+$daFields = 'Season', 'ActivityDate', 'DirectCalls', 'DirectBookings', 'MFPUnitsToDate', 'SalesDay', 'DayNotes'
 Set-PnPView -List $DA -Identity 'All Items' -Fields $daFields | Out-Null
 Add-ViewIfMissing $DA 'By Rep' (@('Author') + $daFields) `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Author" /><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="ActivityDate" Ascending="FALSE" /></OrderBy>' `

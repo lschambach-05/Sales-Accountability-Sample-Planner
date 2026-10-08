@@ -5,7 +5,7 @@ A replacement for the **Accountable Sales Planning Tool** Excel workbook, built 
 - **Reps** set one season goal (all programs combined) with their retention and conversion rates. The plan works backward to the **calls and contacts needed, plus a 10% cushion**.
 - **Each selling day**, reps log their calls, contacts and bookings in about 20 seconds on their phone, and see their progress against target.
 - **Each rep sees only their own data.** SharePoint enforces this, not just the app.
-- **Managers** (2) see a team view: units vs goal, direct and indirect activity vs target, groups booked vs needed, and each rep's last activity date.
+- **Managers** (2) see a team view: units vs goal, sales calls vs target, groups booked vs needed, and each rep's last activity date.
 - **Every Friday** an email reminds any rep who logged nothing that week. **Every Monday** the managers get a digest of last week's activity.
 - **A new year or season** is one new row in a list. Nothing is rebuilt.
 
@@ -42,7 +42,7 @@ Times are estimates, not measurements.
 ## What changed from the workbook
 
 - Weekly entry instead of daily (20 entries per season instead of 100)
-- Direct calls and indirect contacts tracked separately in season, to match the plan
+- One activity number, **sales calls**, with one target and one close rate
 - One goal definition everywhere (Sales Goal Units). Projected units show whether the activity plan covers the goal
 - Fixes 4 workbook bugs (Fall retained units, Dashboard sales-days tile, two conflicting goals, broken Metrics tab). Details in [docs/02-data-model.md](docs/02-data-model.md)
 
@@ -61,6 +61,6 @@ Times are estimates, not measurements.
 
 ## Status
 
-- **SharePoint setup:** run on the live site (ritebitefundraising.sharepoint.com/sites/SalesPlanner) on October 6, 2026, then re-run the same day for the backward-from-goal plan, the Daily Activity list and the In-Person / Gatekeeper labels. A test row checked out on the live site: goal 5,000 → 8 new groups → In-Person Calls Target 27 and Gatekeeper Contacts Target 71.
-- **Power App:** Home, Log a Day and My Plan are built and checked live (October 8, 2026). My Plan is one total plan per rep per season, with Unit Goal as the main input. Still to build: Team screen. Season Results is optional.
+- **SharePoint setup:** run on the live site (ritebitefundraising.sharepoint.com/sites/SalesPlanner) on October 6, 2026, then re-run the same day for the backward-from-goal plan, the Daily Activity list and the In-Person / Gatekeeper labels. A test row checked out on the live site. On October 8, in-person calls and gatekeeper contacts were combined into **Sales Calls** (columns renamed on the live site).
+- **Power App:** Home, Log a Day and My Plan are built and checked live (October 8, 2026). My Plan is one total plan per rep per season, with Unit Goal as the main input and one Sales Call Close %. Home checked: 25,000 goal, 9% close → 440 sales calls. Still to build: Team screen. Season Results is optional.
 - **Reminder flows:** not built yet. Their steps haven't been tested in the tenant, so plan for a short round of fixes.
