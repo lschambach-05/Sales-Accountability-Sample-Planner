@@ -11,8 +11,8 @@ For "2027 Spring" (Lynwood, October 2026):
 Same season only (Spring to Spring, Fall to Fall), any program. Each group's whole history is credited to the
 rep who owns it NOW (Lynwood, October 2026: groups moved from BPR to KJS count for KJS), so a group is retained
 if it ran in both seasons, whoever owned it then. "Owns it now" = the pull's "Group Owner" column if it has one
-(the group's current owning user in MFP), otherwise the owner of the group's most recent fundraiser in the pull,
-after the rollups and placed groups in mfp_rules.py. The pull needs both seasons (for 2027 Spring: Spring 2025
+(the group's current owning user in MFP; the October 2026 pull has it), otherwise the placed groups in
+mfp_rules.py, otherwise the owner of the group's most recent fundraiser in the pull, after the rollups. The pull needs both seasons (for 2027 Spring: Spring 2025
 and Spring 2026).
 
 The output CSV is what tools/Import-RepBaselines.ps1 loads into the Rep Baselines list. Percentages are
@@ -40,7 +40,11 @@ for r in counted:
         latest[r['Group ID']] = (key, r['Owning User'])
 group_owner = {r['Group ID']: r['Group Owner'] for r in rows if (r.get('Group Owner') or '').strip()}
 source = 'the pull\'s Group Owner column' if group_owner else 'the most recent fundraiser in the pull'
-owner = {g: OWNER_OVERRIDES.get(g) or rep_of(group_owner.get(g, v[1])) for g, v in latest.items()}
+def current_owner(g, last_fundraiser_owner):
+    if g in group_owner and rep_of(group_owner[g]) != 'Unassigned':
+        return rep_of(group_owner[g])            # MFP's current owner on the group record
+    return OWNER_OVERRIDES.get(g) or rep_of(last_fundraiser_owner)
+owner = {g: current_owner(g, v[1]) for g, v in latest.items()}
 
 # units[(season, rep)][group] = units
 by = collections.defaultdict(lambda: collections.defaultdict(float))

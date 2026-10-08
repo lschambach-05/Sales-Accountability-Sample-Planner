@@ -6,7 +6,7 @@ Pull group-level sales from My Fundraising Place (MFP). Retained groups are then
 
 **How:** paste the prompt below into a Claude session that has Claude in Chrome and the Sales Accountibility Sample Planner folder connected. Log in to MFP yourself first, because Claude can't enter your password. The browser is used read-only, and nothing in MFP is changed. Update the seasons at the top of the prompt each time.
 
-_Last run: October 5, 2026, covering 2024–2025. The decisions below came from that run._
+_Runs: October 5, 2026 (all of 2024–2025, for the baseline workbook) and October 8, 2026 (Spring 2025 and Spring 2026, for 2027 Spring: 986 fundraisers; Spring 2025 matched the first run exactly, Spring 2026 had 466 fundraisers and 112,124 units). MFP stores a current owner on each group record, and the October 8 pull includes it. The decisions below came from the first run._
 
 ## Prompt to paste into Claude (with Chrome)
 
@@ -25,7 +25,7 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 > |---|---|
 > | Owning User | The fundraiser's owning user. If the invoice owner is different, flag the row. |
 > | Group ID | MFP's permanent group ID. This is the key column for retention. |
-> | Group Owner | The group's **current** owning user, if the group record in MFP shows one. Leave it blank if MFP doesn't store an owner on the group; tell me which. The planner credits each group's history to this rep. |
+> | Group Owner | The group's **current** owning user, from the group record (`/api/groups/{id}`). The planner credits each group's history to this rep. |
 > | Group Name | From the linked invoice or the fundraiser record |
 > | Program | Program family, with OLD/NEW labels dropped (see below) |
 > | Event Name | As shown in MFP |
@@ -128,6 +128,8 @@ Before a season, work out each rep's starting numbers from the pull and load the
    ```
 
    Each row gets its own permissions (managers + that rep). Running it again updates the rows rather than adding duplicates.
+
+**2027 Spring (October 8, 2026):** built from the Spring 2025–2026 pull with MFP's current group owners. Every unit went to a current rep: the reps add up to the season totals (122,586 for Spring 2025, 112,124 for Spring 2026). The per-rep file is `Plan Baseline 2027 Spring.csv`, kept with the pull in SharePoint.
 
 **Checked on the 2024–2025 pull** for 2026 Fall (Fall 2024 → Fall 2025), as a test: every Fall 2024 and Fall 2025 unit was credited to a current rep, and the per-rep units add up to the season totals (218,620 and 212,213). The groups moved from BPR to KJS count as KJS's, in both years. The per-rep numbers are in the CSV, kept with the pull in SharePoint, not in this repository.
 
