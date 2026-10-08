@@ -48,6 +48,7 @@ param(
     [string]   $DirectLabel = 'In-Person',
     [string]   $IndirectLabel = 'Gatekeeper',
     [string[]] $Programs = @(
+        'All Programs',      # the app saves every plan as All Programs; the rest are kept for a per-program split later
         'Butter Braid Pastry',
         'Combo',
         'Wooden Spoon CD',

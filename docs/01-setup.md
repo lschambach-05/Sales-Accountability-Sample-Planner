@@ -56,7 +56,7 @@ The script:
 | Group **Sales Planner Reps** (Contribute) | The 6 reps | n/a |
 | **Seasons** list | Season name, start date (Jan 1 or Jul 1), number of weeks, sales-days goal, which season is current | Managers edit; reps read only |
 | **Reps** list | Roster: name, MFP Owning User code, active? | Managers only |
-| **Program Plans** list | Each rep's pre-season plan per program, plus post-season actuals | Each rep: only their own rows. Managers: all |
+| **Program Plans** list | Each rep's pre-season plan (one per season, all programs combined), plus post-season actuals | Each rep: only their own rows. Managers: all |
 | **Daily Activity** list | One row per rep per selling day: calls, contacts, bookings, MFP units | Each rep: only their own rows. Managers: all |
 
 It's safe to run again (for example, to add a new rep). Anything that already exists is skipped.

@@ -17,8 +17,8 @@ Column names below use the labels **In-Person** (direct sales calls) and **Gatek
 |---|---|---|
 | **scrHome** – My Scorecard | Everyone | Season picker; units vs goal; in-person calls, gatekeeper contacts and sales days vs target; new groups booked vs needed; close rates over the last 12 months |
 | **scrLog** – Log a Day | Everyone | One quick form per selling day. Re-opening the same date edits that day instead of duplicating it |
-| **scrPlan** – My Plan | Everyone | Goal, retention and conversion rates per program. Shows the calls and contacts each program needs |
-| **scrResults** – Season Results | Everyone | Post-season actuals per program |
+| **scrPlan** – My Plan | Everyone | One plan per season (all programs): goal, retention and conversion rates. Shows the calls and contacts needed |
+| **scrResults** – Season Results | Everyone | Post-season actuals (optional; can be entered in SharePoint instead) |
 | **scrTeam** – Team | Managers only | One row per rep: units, targets, progress, last activity |
 
 ## 0. Create the app and connect data
@@ -182,28 +182,18 @@ If(
 
 ## 4. scrPlan – My Plan
 
-1. **Gallery** `galPlans`, Items `colMyPlans`, **OnSelect** `EditForm(frmPlan)`. Calculated columns come back as long decimals, so wrap them in `Text(Value(...))`:
-   - Title: `ThisItem.Program.Value & " · goal " & Text(Value(ThisItem.'Sales Goal Units'), "#,##0")`
-   - Subtitle: `"Target: " & Text(Value(ThisItem.'In-Person Calls Target'), "0") & " in-person · " & Text(Value(ThisItem.'Gatekeeper Contacts Target'), "0") & " gatekeeper"`
-2. **Edit form** `frmPlan`: DataSource `'Program Plans'`, Item `galPlans.Selected`. Fields, in this order:
-   - Season, Program
-   - Prior Year Units, Prior Year Groups
-   - Unit Goal, Growth % (if no Unit Goal)
-   - Retention %, Avg Units per New Group
-   - % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %
+**One plan per rep per season, for all programs combined** (Lynwood, October 2026). Butter Braid is about 85% of sales, and calls aren't tied to a program, so a per-program plan added data entry without telling reps anything new. The row's Program is saved as **All Programs**. Per-program results still come from the yearly MFP pull.
 
-   Set the form's **X** to 0 and **Width** to 640, with 1 column, so the boxes fit on a phone screen.
-
-   **Program dropdown** (the combo box in the Program card, e.g. `DataCardValue1`). In the live build, the choices list came up empty, so use a fixed list:
-   - **Items:** `Table({Value: "Butter Braid Pastry"}, {Value: "Combo"}, {Value: "Wooden Spoon CD"}, {Value: "Joyful Tradition"}, {Value: "Bella Napoli"}, {Value: "Croissant Crowns"})`
-   - **DisplayFields** and **SearchFields:** `["Value"]`
-   - The Program card's **Update:** `DataCardValue1.Selected`
-   - **DisplayMode:** `If(frmPlan.Mode = FormMode.New, DisplayMode.Edit, DisplayMode.View)`. This stops a rep from turning an existing row into a different program by mistake. To switch programs, add a new row.
-3. **Season card:** set the card's **Update** to `{ Id: varSeason.ID, Value: varSeason.Season }` and **Visible** to `false`. The rep never picks a season; it's always the one on the scorecard.
+1. **Edit form** `frmPlan`: DataSource `'Program Plans'`, 1 column, **X** 0, **Width** 640. Put it just under the title (Y about 60) and stretch it down to the Save button.
+   - **Item:** `First(colMyPlans)`
+   - **DefaultMode:** `If(IsEmpty(colMyPlans), FormMode.New, FormMode.Edit)`
+   - Fields, in this order: Season, Program (both hidden, below), Prior Year Units, Prior Year Groups, **Unit Goal**, Growth % (if no Unit Goal), Retention %, Avg Units per New Group, % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %. Reorder with **frmPlan → Edit fields** (drag, or **⋯ → Move up**).
+2. **Season card:** **Update** `{ Id: varSeason.ID, Value: varSeason.Season }`, **Visible** `false`. The rep never picks a season; it's always the one on the scorecard.
+3. **Program card:** **Update** `{Value: "All Programs"}`, **Visible** `false`. The Program column needs **All Programs** among its choices; the setup script adds it.
 4. **Percent cards** (Growth %, Retention %, % of New Groups from In-Person, In-Person Close %, Gatekeeper Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
-   - The text input's **Default**: `If(IsBlank(Parent.Default), "", Parent.Default * 100)`. With plain `Parent.Default * 100`, a new row starts at 0 instead of blank.
+   - The text input's **Default**: `If(IsBlank(Parent.Default), "", Parent.Default * 100)`. With plain `Parent.Default * 100`, a new plan starts at 0 instead of blank, and a 0 close rate makes the targets 0.
    - The card's **Update**: `Value(<that text input>.Text) / 100`
-5. **Live preview under the form**, so the rep sees the calls needed before saving. Add a label with **Text**:
+5. **Live preview under the form** (optional), so the rep sees the calls needed before saving. Add a label with **Text**:
 
    ```powerfx
    With({
@@ -224,34 +214,29 @@ If(
    ```
 
    Replace each `<… input>` with the control name Power Apps gave that field's text box (for example `DataCardValue5`).
-6. **"Add program" button:** `NewForm(frmPlan)`. Tapping a row in the gallery switches back to editing that row.
-7. **Save button:** this blocks a second row for the same program and season:
+6. **Save button** `btnSavePlan`: **Text** `"Save plan"`, **OnSelect** `SubmitForm(frmPlan)`
+7. **frmPlan.OnSuccess:** `ClearCollect(colMyPlans, Filter('Program Plans', Season.Id = varSeason.ID && 'Created By'.Email = User().Email)); Notify("Plan saved", NotificationType.Success)`
+8. **scrPlan.OnVisible:** `ResetForm(frmPlan)`, so the form opens on the rep's plan, or a blank one if they haven't made one yet.
+9. **Back button:** `Navigate(scrHome)`
 
-   ```powerfx
-   If(frmPlan.Mode = FormMode.New &&
-      !IsBlank(LookUp(colMyPlans, Program.Value = <Program card's dropdown>.Selected.Value)),
-       Notify("You already have a plan for that program this season. Select it to edit.", NotificationType.Warning),
-       SubmitForm(frmPlan))
-   ```
+The yellow delegation warning on the form (about `Season.Id`) is harmless here: the app reads up to 500 rows and filters them on the phone, and there are about 12 plan rows a year.
 
-   Save button **Text**: `If(frmPlan.Mode = FormMode.New, "Add this program", "Save changes")`. This shows the rep whether they're adding a row or changing one.
-
-8. **frmPlan.OnSuccess:** `Refresh('Program Plans'); ClearCollect(colMyPlans, Filter('Program Plans', Season.Id = varSeason.ID && 'Created By'.Email = User().Email)); Notify("Plan saved", NotificationType.Success)`
-9. **Header totals:** `"Season goal " & Sum(colMyPlans, 'Sales Goal Units') & " · " & Sum(colMyPlans, 'In-Person Calls Target') & " in-person calls · " & Sum(colMyPlans, 'Gatekeeper Contacts Target') & " gatekeeper contacts"`
+**Checked live (October 8, 2026):** prior 20,000, Unit Goal 25,000, retention 80%, 250 per new group, 60% in-person at 20%, gatekeeper 5% → Home showed goal 25,000, 36 new groups, 119 in-person calls and 317 gatekeeper contacts.
 
 ## 5. scrResults – Season Results
 
-Copy scrPlan (right-click → Duplicate screen) and change the form fields to the **Actual –** input columns: Total Units, Total Groups, Retained Units (ran last year), Retained Groups (ran last year). Remove the "Add program" button and the live preview, because results go on the existing plan rows. Normally these are filled from the yearly MFP pull, so this screen is mostly for viewing and correcting.
+**Optional; skipped for now.** Actuals come from the yearly MFP pull and can be entered straight into the Program Plans list (Plan vs Actual view). If you build it later: copy scrPlan (right-click → Duplicate screen), change the form fields to the **Actual –** input columns (Total Units, Total Groups, Retained Units (ran last year), Retained Groups (ran last year)) and remove the live preview.
 
-Gallery row text:
+If you want a gallery of past seasons on this screen, its row text:
+
 
 ```powerfx
-ThisItem.Program.Value & ": " & Text((ThisItem.'Actual - Attainment %') * 100, "0") & "%" & " of goal · retention " &
+ThisItem.Season.Value & ": " & Text((ThisItem.'Actual - Attainment %') * 100, "0") & "%" & " of goal · retention " &
 Text((ThisItem.'Actual - Unit Retention %') * 100, "0") & "%" & " (plan " & Text((ThisItem.'Retention %') * 100, "0") & "%" & ")" &
 " · " & ThisItem.'Actual - New Groups' & " new groups (plan " & RoundUp(ThisItem.'Plan - New Groups Needed', 0) & ")"
 ```
 
-Add a line under the gallery for the close rates, which cover the rep overall rather than each program:
+Add a line for the close rates over the last 12 months:
 
 ```powerfx
 "Close rates, last 12 months: " & Text((varDirClose12) * 100, "0") & "%" & " in-person · " & Text((varIndClose12) * 100, "0") & "%" & " gatekeeper"

@@ -66,7 +66,9 @@ The old workbook's actuals section divided retained units by **this** season's t
 | MFP Owning User Code | Text (BLS, KJS, …) |
 | Active | Yes/No. Untick when someone leaves; their history stays |
 
-## Program Plans (one row per rep × season × program)
+## Program Plans (one row per rep × season)
+
+Each rep has **one plan per season for all programs combined**, saved with Program = **All Programs** (Lynwood, October 2026). The Program column and its other choices are kept in case you want a per-program split later.
 
 The rep is whoever **created** the row ("Created By"). That's also what item-level security uses.
 
@@ -114,7 +116,7 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 
 The cushion is a setting in the setup script (`-CallBuffer 0.10`). Changing it later means editing the two Target formulas in the list's column settings.
 
-**Post-season inputs** (per program, filled from the yearly MFP pull rather than typed by reps): Actual – Total Units, Total Groups, Retained Units (ran last year), Retained Groups (ran last year). These were workbook rows 22–24.
+**Post-season inputs** (filled from the yearly MFP pull rather than typed by reps): Actual – Total Units, Total Groups, Retained Units (ran last year), Retained Groups (ran last year). These were workbook rows 22–24.
 
 **Post-season calculated:**
 
@@ -152,7 +154,7 @@ Reps only log days they sell, so a week with no selling is simply a week with no
 **In-season scorecard math** (done in the app):
 
 - Direct calls, gatekeeper contacts, bookings and sales days = sums of the season's rows
-- Progress = done ÷ target (target = the +10% numbers, summed across the rep's program rows)
+- Progress = done ÷ target (target = the +10% numbers, from the rep's plan for the season)
 - Remaining = target − done; per selling day left = remaining ÷ (Sales Days Goal − sales days so far)
 - Units to date = the most recent MFP Units Season-to-Date entry, compared with Sales Goal Units
 - Close rates = bookings ÷ calls (or contacts) over the **last 12 months**, compared with the plan's close rates. A rate falling short of plan means more calls are needed than the target says
