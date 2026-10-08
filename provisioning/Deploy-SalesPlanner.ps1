@@ -268,6 +268,8 @@ Add-NumberField $PP 'PriorGroups'
 Add-NumberField $PP 'GrowthPct'            -Decimals 1 -Percent
 Add-NumberField $PP 'GoalOverride'
 Add-NumberField $PP 'RetentionPct'         -Decimals 1 -Percent
+# For reference only (the math uses unit retention): share of last year's groups expected back.
+Add-NumberField $PP 'GroupRetentionPct'    -Decimals 1 -Percent
 Add-NumberField $PP 'AvgUnitsPerGroup'     -Decimals 1
 Add-NumberField $PP 'DirectSharePct'       -Decimals 1 -Percent
 Add-NumberField $PP 'DirectClosePct'       -Decimals 1 -Percent
@@ -315,8 +317,9 @@ Rename-Fields $PP @{
     PriorGroups          = 'Prior Year Groups'
     GoalOverride         = 'Unit Goal'
     GrowthPct            = 'Growth % (if no Unit Goal)'
-    RetentionPct         = 'Retention %'
-    AvgUnitsPerGroup     = 'Avg Units per New Group'
+    RetentionPct         = 'Unit Retention %'
+    GroupRetentionPct    = 'Group Retention %'
+    AvgUnitsPerGroup     = 'Avg Units per Group'
     DirectSharePct       = "% of New Groups from $DirectLabel"
     DirectClosePct       = 'Sales Call Close %'
     IndirectClosePct     = "$IndirectLabel Close %"
@@ -348,7 +351,7 @@ Add-ViewIfMissing $PP 'By Rep' (@('Author') + $planFields) `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Author" /><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="PriorUnits" Type="SUM" />'
 Add-ViewIfMissing $PP 'Plan vs Actual' @('Author', 'Season', 'Program', 'GoalUnits', 'ActTotalUnits', 'ActAttainment',
-                                         'RetentionPct', 'ActRetentionPct', 'PriorGroups', 'ActRetainedGroups', 'ActGroupRetentionPct',
+                                         'RetentionPct', 'ActRetentionPct', 'GroupRetentionPct', 'PriorGroups', 'ActRetainedGroups', 'ActGroupRetentionPct',
                                          'PlanNewGroups', 'ActNewGroups', 'AvgUnitsPerGroup', 'ActNewGroupAvg', 'DirectClosePct') `
     '<GroupBy Collapse="FALSE"><FieldRef Name="Season" /></GroupBy><OrderBy><FieldRef Name="Author" /><FieldRef Name="Program" /></OrderBy>' `
     '<FieldRef Name="ActTotalUnits" Type="SUM" />'
@@ -394,6 +397,49 @@ Add-ViewIfMissing $DA 'By Rep' (@('Author') + $daFields) `
 
 Set-ItemLevelSecurity $DA
 
+# ---------------------------------------------------------------------------
+# Rep Baselines (each rep's starting numbers per season, from the MFP pull)
+# ---------------------------------------------------------------------------
+# Loaded by tools/Import-RepBaselines.ps1, which gives each row its own permissions: managers
+# Full Control, that rep Read. Reps have no access to the list itself, so each sees only their row.
+# The app's My Plan screen pre-fills from it.
+
+Write-Step 'Rep Baselines list'
+$RB = 'Rep Baselines'
+Get-OrNewList $RB 'RepBaselines' | Out-Null
+Set-PnPField -List $RB -Identity 'Title' -Values @{ Required = $false } | Out-Null
+Add-FieldXml $RB 'Season'  "<Field Type=""Lookup"" Name=""Season"" StaticName=""Season"" DisplayName=""Season"" List=""{$seasonsId}"" ShowField=""Title"" Required=""TRUE"" />"
+Add-FieldXml $RB 'RepUser' '<Field Type="User" Name="RepUser" StaticName="RepUser" DisplayName="RepUser" UserSelectionMode="PeopleOnly" Required="TRUE" />'
+Add-FieldXml $RB 'RepCode' '<Field Type="Text" Name="RepCode" StaticName="RepCode" DisplayName="RepCode" MaxLength="20" />'
+Add-NumberField $RB 'PriorUnits'
+Add-NumberField $RB 'PriorGroups'
+Add-NumberField $RB 'AvgUnitsPerGroup'  -Decimals 1
+Add-NumberField $RB 'RetentionPct'      -Decimals 1 -Percent
+Add-NumberField $RB 'GroupRetentionPct' -Decimals 1 -Percent
+Add-FieldXml $RB 'BaseSeason' '<Field Type="Text" Name="BaseSeason" StaticName="BaseSeason" DisplayName="BaseSeason" MaxLength="20" />'
+Add-NumberField $RB 'BaseUnits'
+Add-NumberField $RB 'BaseGroups'
+Add-NumberField $RB 'RetainedUnits'
+Add-NumberField $RB 'RetainedGroups'
+Rename-Fields $RB @{
+    Title             = 'Notes'
+    RepUser           = 'Rep'
+    RepCode           = 'Rep Code'
+    PriorUnits        = 'Prior Year Units'
+    PriorGroups       = 'Prior Year Groups'
+    AvgUnitsPerGroup  = 'Avg Units per Group'
+    RetentionPct      = 'Unit Retention %'
+    GroupRetentionPct = 'Group Retention %'
+    BaseSeason        = 'Retention Measured From'
+    BaseUnits         = 'Base Season Units'
+    BaseGroups        = 'Base Season Groups'
+    RetainedUnits     = 'Retained Units'
+    RetainedGroups    = 'Retained Groups'
+}
+Set-PnPView -List $RB -Identity 'All Items' -Fields 'Season', 'RepCode', 'RepUser', 'PriorUnits', 'PriorGroups', 'AvgUnitsPerGroup',
+    'RetentionPct', 'GroupRetentionPct', 'BaseSeason', 'BaseUnits', 'BaseGroups', 'RetainedUnits', 'RetainedGroups' | Out-Null
+Set-RepsAccess $RB $null
+
 if (Get-PnPList -Identity 'Weekly Check-ins' -ErrorAction SilentlyContinue) {
     Write-Warning "The old 'Weekly Check-ins' list is no longer used (replaced by 'Daily Activity'). Delete it from Site contents if it's empty."
 }
@@ -402,6 +448,7 @@ Write-Step 'Done'
 Write-Host @"
 Next steps (see docs/):
   1. Open the Reps list and fill in each rep's name and MFP Owning User Code.
+     Then load the season's starting numbers: tools/Import-RepBaselines.ps1 (docs/05-mfp-yearly-pull.md).
   2. Open the Seasons list, set the Sales Days Goal, and tick 'Current Season' on the season in progress.
   3. Sign in as (or ask) one rep to confirm they can only see their own rows.
   4. Build the Power App (docs/03-power-app.md) and the weekly summary flows (docs/04-friday-reminder-flow.md).

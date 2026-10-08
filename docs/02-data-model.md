@@ -24,15 +24,20 @@ This page shows how the old **Accountable Sales Planning Tool** workbook maps on
 
 ### Retention: one definition everywhere
 
-**A group is retained if it ran any program, in either season, the previous year.** Its units count toward the program it's running *this* season.
+**For planning (from 2026 Fall on): a group is retained if the same rep ran it, any program, in the same season the year before** (Spring to Spring, Fall to Fall). Lynwood, October 2026. Set **Retention Rule** on these seasons to "Any program, same season last year".
 
-Example: a school ran Butter Braid in Spring 2025 and runs Wooden Spoon in Fall 2026. It's a retained group, and its units are retained units on the rep's **Wooden Spoon** row for 2026 Fall.
+Example, planning **2027 Spring**: of the rep's Spring 2025 groups, the ones they ran again in Spring 2026 are retained. That gives two rates, both filled in from MFP by `tools/build_plan_baseline.py`:
 
-Each season records which rule its numbers were counted under (**Retention Rule** in the Seasons list). The default is "Any program, either season last year". If you tighten the rule later (for example "Same program, same season last year"), set it on the new seasons. The Plan vs Actual view then shows which seasons aren't directly comparable.
+- **Unit Retention %** = Spring 2026 units from those returning groups ÷ the rep's Spring 2025 units. The plan math uses this one.
+- **Group Retention %** = returning groups ÷ the rep's Spring 2025 groups. For reference.
+
+Every number is per **MFP owning user** (after the rollups and placed groups in `tools/mfp_rules.py`). A group that moved from one rep to another between the two years counts as lost for the first rep and new for the second. In the 2024–2025 pull that was 33 Fall groups and 21 Spring groups, almost all BPR to KJS, so BPR's retention reads low and KJS's new-group count reads high for those years.
+
+The earlier rule (2026 Spring and before, and the October 2026 baseline workbook) was "any program, either season last year". Each season records which rule its numbers were counted under (**Retention Rule** in the Seasons list). If you tighten the rule later (for example "Same program, same season last year"), set it on the new seasons. The Plan vs Actual view then shows which seasons aren't directly comparable.
 
 | Column | Meaning |
 |---|---|
-| **Prior Year Units / Prior Year Groups** | That rep's units and number of groups for this program in the **same season** last year (2026 Fall uses 2025 Fall). This is the planning baseline. |
+| **Prior Year Units / Prior Year Groups** | That rep's units and number of groups in the **same season** last year (2027 Spring uses Spring 2026). This is the planning baseline. |
 | **Retained Units** | Units this season from groups that ran last year (per the Retention Rule) |
 | **Retained Groups** | Number of this season's groups that ran last year (per the Retention Rule) |
 | **Unit Retention %** | Retained Units ÷ Prior Year Units. This is the plan's *Retention %* and the actual result |
@@ -78,7 +83,7 @@ The rep is whoever **created** the row ("Created By"). That's also what item-lev
 Sales Goal Units            = Unit Goal      (or, if Unit Goal is blank, Prior Year Units × (1 + Growth %))
 − Retained Units            = Prior Year Units × Retention %
 = New Units Needed          (never below 0)
-÷ Avg Units per New Group   = New Groups Needed
+÷ Avg Units per Group       = New Groups Needed
 ÷ Sales Call Close %       = Sales Calls Needed
 Target = Needed × 1.10, rounded up
 ```
@@ -94,8 +99,9 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 | Prior Year Groups | Number of groups last year | new |
 | Unit Goal | The main goal: units to sell this season. Internal name `GoalOverride` | (row 6) |
 | Growth % (if no Unit Goal) | Optional fallback. Used only when Unit Goal is blank: goal = Prior Year Units × (1 + Growth %). Internal name `GrowthPct` | new |
-| Retention % | Share of last year's units expected back from returning groups | 8 |
-| Avg Units per New Group | | 14 |
+| Unit Retention % | Share of last year's units expected back from returning groups (displayed as "Retention %" before October 2026) | 8 |
+| Group Retention % | Share of last year's groups expected back. For reference; the math uses unit retention | new |
+| Avg Units per Group | The rep's units ÷ groups in the same season last year, all their groups (displayed as "Avg Units per New Group" before October 2026) | 14 |
 | Sales Call Close % | Share of sales calls that book a fundraiser (one blended rate; see the app guide for how to blend old in-person and gatekeeper rates) | 11/13 |
 | % of New Groups from In-Person, Gatekeeper Close % | Unused. The app sets the first to 100% and hides both | |
 
@@ -106,7 +112,7 @@ Worked example (illustrative numbers, not anyone's real plan): prior 4,000 units
 | Sales Goal Units | Unit Goal if filled in, otherwise Prior Year Units × (1 + Growth %) |
 | Plan – Retained Units | Prior Year Units × Retention % |
 | Plan – New Units Needed | Goal − Retained (never below 0) |
-| Plan – New Groups Needed | New Units Needed ÷ Avg Units per New Group |
+| Plan – New Groups Needed | New Units Needed ÷ Avg Units per Group |
 | Sales Calls Needed | New Groups ÷ Sales Call Close %, rounded up (the formula still multiplies by the in-person share, which is 100%) |
 | Sales Calls Target | Sales Calls Needed × 1.10, rounded up. **This is what the app tracks.** |
 | Gatekeeper Contacts Needed / Target | Unused; 0 when the in-person share is 100% |
@@ -132,6 +138,17 @@ All divisions return 0 instead of an error when the bottom number is 0.
 **Actual close rates are measured per rep over a full year, not per program or per season.** A call made in spring can book a group that runs in fall, so a one-season close rate would be too low in one season and too high in the next. The app counts all of a rep's calls and bookings from the Daily Activity log over the **last 12 months**, across both seasons. That's the realistic number to compare with the plan's close rates, and to use when setting next season's plan. Bookings are logged on the day they happen, and MFP decides which season the group's units count in.
 
 **Percent columns:** in the list forms, type **50** for 50%. This was confirmed on the live site in October 2026: Retention 50 on 800 prior units gave 400 retained. SharePoint stores the value as a fraction (0.5), and that's what Power Apps and Power Automate read, which is why the Power App percent fields multiply and divide by 100 (see page 3).
+
+## Rep Baselines (one row per rep × season, loaded from MFP)
+
+Each rep's starting numbers for a season, worked out from the MFP pull by `tools/build_plan_baseline.py` and loaded by `tools/Import-RepBaselines.ps1`. My Plan pre-fills from it. Each row has its own permissions: managers Full Control, that rep Read, so a rep sees only their own row.
+
+| Column | Notes |
+|---|---|
+| Season, Rep, Rep Code | The season being planned, and the rep (matched on MFP Owning User Code in the Reps list) |
+| Prior Year Units, Prior Year Groups, Avg Units per Group | Same season last year |
+| Unit Retention %, Group Retention % | Measured from the season two years back to last year (see Retention above) |
+| Retention Measured From, Base Season Units / Groups, Retained Units / Groups | The working, so the percentages can be checked |
 
 ## Daily Activity (one row per rep × selling day)
 

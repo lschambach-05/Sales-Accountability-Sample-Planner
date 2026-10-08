@@ -3,7 +3,7 @@
 **Time:** about 30–60 minutes the first time (rough estimate).
 **Who:** someone with Microsoft 365 admin rights, or a manager plus your M365 admin for step 2.
 
-At the end of this step you'll have a private SharePoint site with four lists. Each rep can see and edit only their own rows, and the two managers can see everything.
+At the end of this step you'll have a private SharePoint site with five lists. Each rep can see and edit only their own rows, and the two managers can see everything.
 
 ---
 
@@ -57,7 +57,8 @@ The script:
 | **Seasons** list | Season name, start date (Jan 1 or Jul 1), number of weeks, sales-days goal, which season is current | Managers edit; reps read only |
 | **Reps** list | Roster: name, MFP Owning User code, active? | Managers only |
 | **Program Plans** list | Each rep's pre-season plan (one per season, all programs combined), plus post-season actuals | Each rep: only their own rows. Managers: all |
-| **Daily Activity** list | One row per rep per selling day: calls, contacts, bookings, MFP units | Each rep: only their own rows. Managers: all |
+| **Daily Activity** list | One row per rep per selling day: sales calls, new groups, MFP units | Each rep: only their own rows. Managers: all |
+| **Rep Baselines** list | Each rep's starting numbers per season from MFP (prior-year units and groups, retention, average per group). Loaded by `tools/Import-RepBaselines.ps1` | Each rep: only their own row. Managers: all |
 
 It's safe to run again (for example, to add a new rep). Anything that already exists is skipped.
 

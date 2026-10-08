@@ -1,7 +1,7 @@
 """Build the rep baseline workbook (prior-year units/groups, retention) from the yearly MFP pull CSV.
 
 Usage: python tools/build_rep_baseline.py <MFP pull .csv> <output .xlsx>
-Rules are documented in docs/05-mfp-yearly-pull.md. Season names are currently 2024/2025;
+Rules are in tools/mfp_rules.py and documented in docs/05-mfp-yearly-pull.md. Season names are currently 2024/2025;
 change SEASONS_2025 and the 2024/2025 references for a new year.
 """
 import sys, csv, collections
@@ -9,51 +9,13 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
+from mfp_rules import CURRENT, ROLLUP, PROGRAMS, PROG_ORDER, GROUP_MERGES, OWNER_OVERRIDES, rep_of, units, load, split_counted
 
 SRC, OUT = sys.argv[1], sys.argv[2]
-R = list(csv.DictReader(open(SRC)))
+R = load(SRC)
 
-CURRENT = ['BPR', 'JK', 'JMK', 'KJP', 'KJS', 'RB']
-ROLLUP = {'BLS': 'KJS', 'LBS': 'KJP', 'LMD': 'JMK'}
-PROGRAMS = {'Braided Pastry': 'Butter Braid Pastry', 'Combo': 'Combo', 'Wooden Spoon': 'Wooden Spoon CD',
-            'Joyful Traditions': 'Joyful Tradition', 'Bella Napoli': 'Bella Napoli', 'Croissant Crown': 'Croissant Crowns',
-            # Batavia Music Buffs is one group that runs all products; MFP names its program by year.
-            # It is not a planner program, so its units count under Combo (Lynwood, Oct 2026).
-            'Batavia Music Buffs 2023': 'Combo', 'Batavia Music Buffs 2025': 'Combo'}
-PROG_ORDER = ['Butter Braid Pastry', 'Combo', 'Wooden Spoon CD', 'Joyful Tradition', 'Bella Napoli', 'Croissant Crowns',
-              'Other (review)']
-# Duplicate MFP group records for the same organization: {duplicate Group ID: Group ID to keep}.
-GROUP_MERGES = {'199961': '84951'}   # St. Paul's Lutheran School (JK) - confirmed same school, Oct 2026
-# Groups whose last owner is no longer a rep: {Group ID: current rep}. Filled in from the location match.
-OWNER_OVERRIDES = {   # from MFP group locations.csv (Oct 2026): most groups in same city, else same county
-    '163565': 'KJP',  # Troop 1024, Pound WI - city
-    '191059': 'KJS',  # Trail Life IL 2237, Rockford IL - city
-    '191570': 'BPR',  # Lake County Lightning 12u, Hawthorn Woods IL - city
-    '191969': 'BPR',  # Scouts BSA Troop 815, Chicago IL - city
-    '192955': 'KJP',  # New Holstein HS Band/Choir, New Holstein WI - Calumet County
-    '193455': 'KJP',  # Boy Scout Troop 1044, De Pere WI - Brown County
-    '202009': 'KJP',  # Troop 601, Oshkosh WI - city
-}
-
-for r in R:
-    r['Original Group ID'] = r['Group ID']
-    r['Group ID'] = GROUP_MERGES.get(r['Group ID'], r['Group ID'])
 SEASONS_2025 = ['Spring 2025', 'Fall 2025']
-
-def rep_of(code):
-    code = ROLLUP.get(code, code)
-    return code if code in CURRENT else 'Unassigned'
-
-def units(r): return float(r['Units'] or 0)
-
-# ---- which fundraisers count ----
-counted, excluded = [], []
-for r in R:
-    if r['Status'] == 'Canceled':
-        excluded.append((r, 'Canceled')); continue
-    if units(r) <= 0:
-        excluded.append((r, 'Open/closed with no units sold' if r['Status'] == 'Open' else 'Closed with no units')); continue
-    counted.append(r)
+counted, excluded = split_counted(R)
 
 # ---- current owner of each group = owner of its most recent counted fundraiser ----
 latest = {}

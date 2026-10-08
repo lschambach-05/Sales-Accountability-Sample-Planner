@@ -183,14 +183,34 @@ If(
 1. **Edit form** `frmPlan`: DataSource `'Program Plans'`, 1 column, **X** 0, **Width** 640. Put it just under the title (Y about 60) and stretch it down to the Save button.
    - **Item:** `First(colMyPlans)`
    - **DefaultMode:** `If(IsEmpty(colMyPlans), FormMode.New, FormMode.Edit)`
-   - Fields, in this order: Season, Program (both hidden, below), Prior Year Units, Prior Year Groups, **Unit Goal**, Growth % (if no Unit Goal), Retention %, Avg Units per New Group, **Sales Call Close %**, plus two hidden cards (below). Reorder with **frmPlan → Edit fields** (drag, or **⋯ → Move up**).
+   - Fields, in this order: Season, Program (both hidden, below), Prior Year Units, Prior Year Groups, **Unit Goal**, Growth % (if no Unit Goal), Unit Retention %, Group Retention %, Avg Units per Group, **Sales Call Close %**, plus two hidden cards (below). Reorder with **frmPlan → Edit fields** (drag, or **⋯ → Move up**).
 2. **Season card:** **Update** `{ Id: varSeason.ID, Value: varSeason.Season }`, **Visible** `false`. The rep never picks a season; it's always the one on the scorecard.
 3. **Program card:** **Update** `{Value: "All Programs"}`, **Visible** `false`. The Program column needs **All Programs** among its choices; the setup script adds it.
    - **% of New Groups from In-Person** card: **Update** `1`, **Visible** `false`. Every new group comes from sales calls.
    - **Gatekeeper Close %** card: **Visible** `false`. Unused.
-4. **Percent cards** (Growth %, Retention %, Sales Call Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
+4. **Percent cards** (Growth %, Unit Retention %, Group Retention %, Sales Call Close %). SharePoint stores 50% as 0.5, so that reps can type 50:
    - The text input's **Default**: `If(IsBlank(Parent.Default), "", Parent.Default * 100)`. With plain `Parent.Default * 100`, a new plan starts at 0 instead of blank, and a 0 close rate makes the targets 0.
    - The card's **Update**: `Value(<that text input>.Text) / 100`
+4a. **Pre-fill from MFP** (Rep Baselines list; add it as a data source). In **btnLoad.OnSelect** add:
+
+   ```powerfx
+   Set(varBase, LookUp('Rep Baselines', Season.Id = varSeason.ID && Lower(Rep.Email) = Lower(User().Email)));
+   ```
+
+   Then set the **Default** of these text inputs. A new plan fills in automatically; on an existing plan the rep taps **Fill in from MFP**:
+
+   | Card | Text input Default |
+   |---|---|
+   | Prior Year Units | `If((frmPlan.Mode = FormMode.New \|\| varUseBase) && !IsBlank(varBase), varBase.'Prior Year Units', Parent.Default)` |
+   | Prior Year Groups | same, with `varBase.'Prior Year Groups'` |
+   | Avg Units per Group | same, with `varBase.'Avg Units per Group'` |
+   | Unit Retention % | `If((frmPlan.Mode = FormMode.New \|\| varUseBase) && !IsBlank(varBase), Round(varBase.'Unit Retention %' * 100, 1), If(IsBlank(Parent.Default), "", Parent.Default * 100))` |
+   | Group Retention % | same, with `varBase.'Group Retention %'` |
+
+   - **scrPlan.OnVisible:** `Set(varUseBase, false); ResetForm(frmPlan)`
+   - Button **btnFillMFP**: Text `"Fill in from MFP"`, **Visible** `!IsBlank(varBase)`, **OnSelect** `Set(varUseBase, true)`. The numbers appear in the boxes; nothing is saved until **Save plan**.
+   - Optional label under the title: `If(IsBlank(varBase), "", varBase.'Retained Groups' & " of " & varBase.'Base Season Groups' & " " & varBase.'Retention Measured From' & " groups came back last year")`
+
 5. **Live preview under the form** (optional), so the rep sees the calls needed before saving. Add a label with **Text**:
 
    ```powerfx
@@ -198,8 +218,8 @@ If(
        prior:  Value(<Prior Year Units input>.Text),
        growth: Value(<Growth % input>.Text) / 100,
        over:   Value(<Unit Goal input>.Text),
-       ret:    Value(<Retention % input>.Text) / 100,
-       avg:    Value(<Avg Units input>.Text),
+       ret:    Value(<Unit Retention % input>.Text) / 100,
+       avg:    Value(<Avg Units per Group input>.Text),
        close:  Value(<Sales Call Close % input>.Text) / 100
    },
    With({ goal: If(over > 0, over, Round(prior * (1 + growth), 0)) },
@@ -229,7 +249,7 @@ If you want a gallery of past seasons on this screen, its row text:
 
 ```powerfx
 ThisItem.Season.Value & ": " & Text((ThisItem.'Actual - Attainment %') * 100, "0") & "%" & " of goal · retention " &
-Text((ThisItem.'Actual - Unit Retention %') * 100, "0") & "%" & " (plan " & Text((ThisItem.'Retention %') * 100, "0") & "%" & ")" &
+Text((ThisItem.'Actual - Unit Retention %') * 100, "0") & "%" & " (plan " & Text((ThisItem.'Unit Retention %') * 100, "0") & "%" & ")" &
 " · " & ThisItem.'Actual - New Groups' & " new groups (plan " & RoundUp(ThisItem.'Plan - New Groups Needed', 0) & ")"
 ```
 

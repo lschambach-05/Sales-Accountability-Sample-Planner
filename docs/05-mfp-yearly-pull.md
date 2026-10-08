@@ -99,6 +99,37 @@ The rules (agreed with Lynwood, October 2026) are set at the top of the script. 
 
 The sales data itself is kept in SharePoint, not in this repository.
 
+## Plan starting numbers for each rep (pre-filled in My Plan)
+
+Before a season, work out each rep's starting numbers from the pull and load them into the **Rep Baselines** list. My Plan then fills them in, so reps only add their Unit Goal and close rate.
+
+**Which years the pull needs:** the two seasons before the one being planned. For **2027 Spring** that's Spring 2025 and Spring 2026, so pull **2025–2026** (the prompt above, with the years changed). Fall 2026 doesn't finish until December, so for **2027 Fall** pull again after that.
+
+1. Work out the numbers (one CSV per season planned):
+
+   ```bash
+   python tools/build_plan_baseline.py "MFP group sales 2025-2026.csv" "2027 Spring" "Plan Baseline 2027 Spring.csv"
+   ```
+
+   It prints a table per rep to check. The rules are in [02-data-model.md](02-data-model.md#retention-one-definition-everywhere): same season, any program, per MFP owning user; average = all of the rep's groups last season.
+
+2. Make sure the season exists in the **Seasons** list and every rep is in the **Reps** list with their **MFP Owning User Code** and **Rep** person filled in.
+
+3. Load it (PowerShell 7, same sign-in app as the setup script):
+
+   ```powershell
+   ./tools/Import-RepBaselines.ps1 `
+       -SiteUrl  https://ritebitefundraising.sharepoint.com/sites/SalesPlanner `
+       -ClientId <client id> `
+       -CsvPath  "Plan Baseline 2027 Spring.csv"
+   ```
+
+   Each row gets its own permissions (managers + that rep). Running it again updates the rows rather than adding duplicates.
+
+**Checked on the 2024–2025 pull** for 2026 Fall (Fall 2024 → Fall 2025): every Fall 2025 unit was attributed to a current rep, and the per-rep units add up to the season total of 212,213. The per-rep numbers are in the CSV, kept with the pull in SharePoint, not in this repository.
+
+33 Fall groups moved from BPR to KJS between Fall 2024 and Fall 2025. Under the owning-user rule they count as lost for BPR and new for KJS, which pulls BPR's retention down.
+
 ## Group locations (for placing unassigned groups)
 
 When a group's last owner is no longer a rep, the group goes to the **current rep with the most groups in the same city**, or failing that, the **same county** (Lynwood, Oct 2026). Ties, and groups with no match, are listed for Lynwood to decide. This needs each group's location, which the sales pull doesn't include. Paste this into the Claude-with-Chrome session:
