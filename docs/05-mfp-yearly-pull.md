@@ -41,7 +41,7 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 >
 > **Save** to Rite Bite Claude Skills → Documents → Lynwood → Sales Accountibility Sample Planner:
 > - `MFP group sales Spring 2025-2026.xlsx` (name it for the seasons pulled), with sheets **Fundraisers**, **Season Check** (rows, rows with units, units and invoice $ by season and status), **Units by Rep**, **Group Checks** (group names that appear under more than one Group ID) and **Notes** (source, season rule, anything that looked off).
-> - CSV copies of each sheet: `MFP group sales YYYY-YYYY.csv` for Fundraisers, and `… - Notes.csv`, `… - Season Check.csv` and `… - Group Checks.csv`. Other Claude sessions can't read the whole xlsx through the connector, but they can read the CSVs.
+> - CSV copies of each sheet: `MFP group sales Spring 2025-2026.csv` for Fundraisers, and `… - Notes.csv`, `… - Season Check.csv` and `… - Group Checks.csv`. Other Claude sessions can't read the whole xlsx through the connector, but they can read the CSVs.
 >
 > **Tell me:** rows per season, whether every row has a Group ID, how many rows were flagged and why, and any group names that appear under more than one Group ID.
 
