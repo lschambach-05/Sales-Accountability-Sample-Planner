@@ -24,14 +24,14 @@ This page shows how the old **Accountable Sales Planning Tool** workbook maps on
 
 ### Retention: one definition everywhere
 
-**For planning (from 2026 Fall on): a group is retained if the same rep ran it, any program, in the same season the year before** (Spring to Spring, Fall to Fall). Lynwood, October 2026. Set **Retention Rule** on these seasons to "Any program, same season last year".
+**For planning (from 2027 Spring on): a group is retained if it ran, any program, in the same season the year before** (Spring to Spring, Fall to Fall). Lynwood, October 2026. Set **Retention Rule** on these seasons to "Any program, same season last year".
 
 Example, planning **2027 Spring**: of the rep's Spring 2025 groups, the ones they ran again in Spring 2026 are retained. That gives two rates, both filled in from MFP by `tools/build_plan_baseline.py`:
 
 - **Unit Retention %** = Spring 2026 units from those returning groups ÷ the rep's Spring 2025 units. The plan math uses this one.
 - **Group Retention %** = returning groups ÷ the rep's Spring 2025 groups. For reference.
 
-Every number is per **MFP owning user** (after the rollups and placed groups in `tools/mfp_rules.py`). A group that moved from one rep to another between the two years counts as lost for the first rep and new for the second. In the 2024–2025 pull that was 33 Fall groups and 21 Spring groups, almost all BPR to KJS, so BPR's retention reads low and KJS's new-group count reads high for those years.
+**Each group's whole history is credited to the rep who owns it now** (Lynwood, October 2026), after the rollups and placed groups in `tools/mfp_rules.py`. So the groups moved from BPR to KJS count as KJS's in both years, and as retained for KJS if they ran both years. "Owns it now" is the group's current owning user in MFP if the pull includes it, otherwise the owner of its most recent fundraiser in the pull.
 
 The earlier rule (2026 Spring and before, and the October 2026 baseline workbook) was "any program, either season last year". Each season records which rule its numbers were counted under (**Retention Rule** in the Seasons list). If you tighten the rule later (for example "Same program, same season last year"), set it on the new seasons. The Plan vs Actual view then shows which seasons aren't directly comparable.
 

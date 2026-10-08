@@ -1,8 +1,10 @@
-# 5. Yearly MFP pull (for prior-year and retention numbers)
+# 5. MFP pull (for prior-year and retention numbers)
 
-Once a year, pull group-level sales from My Fundraising Place (MFP) for the last two years. Retained groups are then matched from the raw rows, not counted by hand in MFP.
+**The planner works one season at a time** (Lynwood, October 2026). Before each season, pull that season from the two years before it: for **2027 Spring**, pull **Spring 2025 and Spring 2026**; in June, pull Fall 2025 and Fall 2026 for **2027 Fall**. (The October 2026 run below pulled all of 2024–2025, for the baseline workbook.)
 
-**How:** paste the prompt below into a Claude session that has Claude in Chrome and the Sales Accountibility Sample Planner folder connected. Log in to MFP yourself first, because Claude can't enter your password. The browser is used read-only, and nothing in MFP is changed. Update the years at the top of the prompt each time.
+Pull group-level sales from My Fundraising Place (MFP). Retained groups are then matched from the raw rows, not counted by hand in MFP.
+
+**How:** paste the prompt below into a Claude session that has Claude in Chrome and the Sales Accountibility Sample Planner folder connected. Log in to MFP yourself first, because Claude can't enter your password. The browser is used read-only, and nothing in MFP is changed. Update the seasons at the top of the prompt each time.
 
 _Last run: October 5, 2026, covering 2024–2025. The decisions below came from that run._
 
@@ -10,7 +12,7 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 
 > **Task: export group-level sales from My Fundraising Place, read-only.**
 >
-> I'm logged in to My Fundraising Place (app.myfundraisingplace.com) in Chrome. Pull fundraiser-level sales for **2024 and 2025** (Spring and Fall) for all owning users. This is read-only. Do not edit, reassign, save or submit anything in MFP. If any step would change data, stop and ask me.
+> I'm logged in to My Fundraising Place (app.myfundraisingplace.com) in Chrome. Pull fundraiser-level sales for **Spring 2025 and Spring 2026** (delivery dates January 1 – June 30 of each year) for all owning users. This is read-only. Do not edit, reassign, save or submit anything in MFP. If any step would change data, stop and ask me.
 >
 > **Source (already decided, so don't re-ask):**
 > - Main list: **Sales → Fundraisers**, all owning users, all statuses. Read it through the grid's own data request (`/grid/Fundraisers`, 50 rows per page) with a date window about 6 months wider than the target years on each side. The grid's date filter matches delivery date, so the counts per half-year should line up with the seasons.
@@ -23,6 +25,7 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 > |---|---|
 > | Owning User | The fundraiser's owning user. If the invoice owner is different, flag the row. |
 > | Group ID | MFP's permanent group ID. This is the key column for retention. |
+> | Group Owner | The group's **current** owning user, if the group record in MFP shows one. Leave it blank if MFP doesn't store an owner on the group; tell me which. The planner credits each group's history to this rep. |
 > | Group Name | From the linked invoice or the fundraiser record |
 > | Program | Program family, with OLD/NEW labels dropped (see below) |
 > | Event Name | As shown in MFP |
@@ -37,7 +40,7 @@ _Last run: October 5, 2026, covering 2024–2025. The decisions below came from 
 > **Getting the data out of the browser:** the page data is too large to read back directly. Ask me before downloading. Then build a CSV in the page, download it to my Downloads folder, and ask for access to that folder to build the Excel file.
 >
 > **Save** to Rite Bite Claude Skills → Documents → Lynwood → Sales Accountibility Sample Planner:
-> - `MFP group sales YYYY-YYYY.xlsx`, with sheets **Fundraisers**, **Season Check** (rows, rows with units, units and invoice $ by season and status), **Units by Rep**, **Group Checks** (group names that appear under more than one Group ID) and **Notes** (source, season rule, anything that looked off).
+> - `MFP group sales Spring 2025-2026.xlsx` (name it for the seasons pulled), with sheets **Fundraisers**, **Season Check** (rows, rows with units, units and invoice $ by season and status), **Units by Rep**, **Group Checks** (group names that appear under more than one Group ID) and **Notes** (source, season rule, anything that looked off).
 > - CSV copies of each sheet: `MFP group sales YYYY-YYYY.csv` for Fundraisers, and `… - Notes.csv`, `… - Season Check.csv` and `… - Group Checks.csv`. Other Claude sessions can't read the whole xlsx through the connector, but they can read the CSVs.
 >
 > **Tell me:** rows per season, whether every row has a Group ID, how many rows were flagged and why, and any group names that appear under more than one Group ID.
@@ -103,7 +106,7 @@ The sales data itself is kept in SharePoint, not in this repository.
 
 Before a season, work out each rep's starting numbers from the pull and load them into the **Rep Baselines** list. My Plan then fills them in, so reps only add their Unit Goal and close rate.
 
-**Which years the pull needs:** the two seasons before the one being planned. For **2027 Spring** that's Spring 2025 and Spring 2026, so pull **2025–2026** (the prompt above, with the years changed). Fall 2026 doesn't finish until December, so for **2027 Fall** pull again after that.
+**Which seasons the pull needs:** the same season in the two years before. For **2027 Spring**: Spring 2025 and Spring 2026 (the prompt above). For **2027 Fall**, in June: Fall 2025 and Fall 2026.
 
 1. Work out the numbers (one CSV per season planned):
 
@@ -111,11 +114,11 @@ Before a season, work out each rep's starting numbers from the pull and load the
    python tools/build_plan_baseline.py "MFP group sales 2025-2026.csv" "2027 Spring" "Plan Baseline 2027 Spring.csv"
    ```
 
-   It prints a table per rep to check. The rules are in [02-data-model.md](02-data-model.md#retention-one-definition-everywhere): same season, any program, per MFP owning user; average = all of the rep's groups last season.
+   It prints a table per rep to check. The rules are in [02-data-model.md](02-data-model.md#retention-one-definition-everywhere): same season, any program; each group's history goes to the rep who owns it now; average = all of the rep's groups last season.
 
 2. Make sure the season exists in the **Seasons** list and every rep is in the **Reps** list with their **MFP Owning User Code** and **Rep** person filled in.
 
-3. Load it (PowerShell 7, same sign-in app as the setup script):
+3. Load it (PowerShell 7, same sign-in app as the setup script). Download `tools/Import-RepBaselines.ps1` from GitHub and unblock it like the setup script:
 
    ```powershell
    ./tools/Import-RepBaselines.ps1 `
@@ -126,9 +129,7 @@ Before a season, work out each rep's starting numbers from the pull and load the
 
    Each row gets its own permissions (managers + that rep). Running it again updates the rows rather than adding duplicates.
 
-**Checked on the 2024–2025 pull** for 2026 Fall (Fall 2024 → Fall 2025): every Fall 2025 unit was attributed to a current rep, and the per-rep units add up to the season total of 212,213. The per-rep numbers are in the CSV, kept with the pull in SharePoint, not in this repository.
-
-33 Fall groups moved from BPR to KJS between Fall 2024 and Fall 2025. Under the owning-user rule they count as lost for BPR and new for KJS, which pulls BPR's retention down.
+**Checked on the 2024–2025 pull** for 2026 Fall (Fall 2024 → Fall 2025), as a test: every Fall 2024 and Fall 2025 unit was credited to a current rep, and the per-rep units add up to the season totals (218,620 and 212,213). The groups moved from BPR to KJS count as KJS's, in both years. The per-rep numbers are in the CSV, kept with the pull in SharePoint, not in this repository.
 
 ## Group locations (for placing unassigned groups)
 

@@ -8,9 +8,12 @@ For "2027 Spring" (Lynwood, October 2026):
   Avg Units per Group       = Spring 2026 units / Spring 2026 groups
   Unit Retention %          = Spring 2026 units from groups that also ran Spring 2025 / Spring 2025 units
   Group Retention %         = Spring 2025 groups that ran again in Spring 2026 / Spring 2025 groups
-Same season only (Spring to Spring, Fall to Fall), any program. A fundraiser belongs to its MFP owning user,
-after the rollups and placed groups in mfp_rules.py; a group counts as retained only if the same rep ran it
-both years. The pull must cover both years (here 2025 and 2026).
+Same season only (Spring to Spring, Fall to Fall), any program. Each group's whole history is credited to the
+rep who owns it NOW (Lynwood, October 2026: groups moved from BPR to KJS count for KJS), so a group is retained
+if it ran in both seasons, whoever owned it then. "Owns it now" = the pull's "Group Owner" column if it has one
+(the group's current owning user in MFP), otherwise the owner of the group's most recent fundraiser in the pull,
+after the rollups and placed groups in mfp_rules.py. The pull needs both seasons (for 2027 Spring: Spring 2025
+and Spring 2026).
 
 The output CSV is what tools/Import-RepBaselines.ps1 loads into the Rep Baselines list. Percentages are
 fractions (0.75 = 75%), the way SharePoint stores them.
@@ -22,20 +25,28 @@ SRC, TARGET, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 year, half = TARGET.split()                      # planner names seasons "2027 Spring"
 prior, base = f'{half} {int(year) - 1}', f'{half} {int(year) - 2}'   # MFP names them "Spring 2026"
 
-counted, _ = split_counted(load(SRC))
+rows = load(SRC)
+counted, _ = split_counted(rows)
 seasons_in_pull = {r['Season'] for r in counted}
 for s in (prior, base):
     if s not in seasons_in_pull:
         sys.exit(f'The pull has no {s} fundraisers. Pull {int(year) - 2}-{int(year) - 1} from MFP first.')
 
-def rep(r):
-    return OWNER_OVERRIDES.get(r['Group ID']) or rep_of(r['Owning User'])
+# Current owner of each group
+latest = {}
+for r in counted:
+    key = (r['Delivery Date'] or r['Start Date'], r['Fundraiser ID'])
+    if r['Group ID'] not in latest or key > latest[r['Group ID']][0]:
+        latest[r['Group ID']] = (key, r['Owning User'])
+group_owner = {r['Group ID']: r['Group Owner'] for r in rows if (r.get('Group Owner') or '').strip()}
+source = 'the pull\'s Group Owner column' if group_owner else 'the most recent fundraiser in the pull'
+owner = {g: OWNER_OVERRIDES.get(g) or rep_of(group_owner.get(g, v[1])) for g, v in latest.items()}
 
 # units[(season, rep)][group] = units
 by = collections.defaultdict(lambda: collections.defaultdict(float))
 for r in counted:
     if r['Season'] in (prior, base):
-        by[(r['Season'], rep(r))][r['Group ID']] += units(r)
+        by[(r['Season'], owner[r['Group ID']])][r['Group ID']] += units(r)
 
 reps = sorted({k[1] for k in by if k[1] != 'Unassigned'})
 rows = []
@@ -58,11 +69,11 @@ with open(OUT, 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=list(rows[0]))
     w.writeheader(); w.writerows(rows)
 
-print(f'{TARGET}: prior season {prior}, retention measured {base} -> {prior}')
+print(f'{TARGET}: prior season {prior}, retention measured {base} -> {prior}; groups credited to current owner from {source}')
 print(f"{'Rep':5}{'Units':>9}{'Groups':>8}{'Avg':>8}{'Unit ret':>10}{'Group ret':>11}")
 for r in rows:
     print(f"{r['Rep Code']:5}{r['Prior Year Units']:>9,}{r['Prior Year Groups']:>8}{r['Avg Units per Group']:>8}"
           f"{r['Unit Retention %']:>10.0%}{r['Group Retention %']:>11.0%}")
 left_out = sum(by[(prior, 'Unassigned')].values())
 if left_out:
-    print(f'{prior} units owned by former reps and not placed (left out): {left_out:,.0f}')
+    print(f'{prior} units in groups whose current owner is not a current rep (left out): {left_out:,.0f}')
