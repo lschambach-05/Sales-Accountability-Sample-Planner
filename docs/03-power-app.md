@@ -67,14 +67,15 @@ Set(varDirClose12, IfError(Sum(colMyYear, 'New Groups') / Sum(colMyYear, 'Sales 
 Set(varGoal,          Sum(colMyPlans, 'Sales Goal Units'));
 Set(varDirectTarget,  Sum(colMyPlans, 'Sales Calls Target'));
 Set(varGroupsNeeded,  Sum(colMyPlans, 'Plan - New Groups Needed'));
-Set(varDirectDone,    Sum(colMyDays, 'Sales Calls'));
+Set(varDirectDone,    Sum(colMyDays, 'Sales Calls') + 0);        // + 0 turns an empty season's blank into 0
 Set(varBooked,        Sum(colMyDays, 'New Groups'));
-Set(varSalesDays,     Sum(colMyDays, 'Sales Day'));
+Set(varSalesDays,     Sum(colMyDays, 'Sales Day') + 0);
 Set(varUnits,         Coalesce(First(Filter(colMyDays, !IsBlank('MFP Units Season-to-Date'))).'MFP Units Season-to-Date', 0));
 
 // How far through the season we are (reference only; selling comes in bursts, so there's no weekly pace)
-Set(varElapsed, Max(0, Min(1,
-    DateDiff(varSeason.'Season Start', Today(), TimeUnit.Days) / (varSeason.Weeks * 7))));
+// IfError: a season with no Weeks would otherwise divide by 0 and stop the screen loading
+Set(varElapsed, IfError(Max(0, Min(1,
+    DateDiff(varSeason.'Season Start', Today(), TimeUnit.Days) / (varSeason.Weeks * 7))), 0));
 
 // Selling days left in the plan (never below 1, so "per day" never divides by 0)
 Set(varDaysLeft, Max(1, Coalesce(varSeason.'Sales Days Goal', 0) - varSalesDays));
@@ -86,7 +87,11 @@ If(varIsManager,
     ClearCollect(colAllYear,  Filter(colAllRows, 'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
     ClearCollect(colReps,     Filter(Reps, Active = true))
 );
+// This rep's starting numbers from MFP for the season (My Plan pre-fills from it)
+Set(varBase, LookUp('Rep Baselines', Season.Id = varSeason.ID && Lower(Rep.Email) = Lower(User().Email)))
 ```
+
+**In the editor,** variables keep their last value until the formula runs again. **Run OnStart** (⋯ next to App) reloads the season but not btnLoad; btnLoad runs when Home opens, so Play, go to another screen and come back.
 
 **scrHome.OnVisible:** `Select(btnLoad)`
 
@@ -98,7 +103,7 @@ If(varIsManager,
 
 > Power Apps' `Text()` does **not** turn `"0%"` into a percentage the way Excel does (it rounds the plain number), so every percentage below multiplies by 100 first. This was found on the live build in October 2026.
 
-**Header line:** `varSeason.Season & " · " & Text(varElapsed * 100, "0") & "% of the season gone"`
+**Header line:** `IfError(varSeason.Season & " · " & Text(varElapsed * 100, "0") & "% of the season gone", varSeason.Season)`
 
 **Tiles.** Add five tiles (a rectangle plus labels). The text formulas:
 
@@ -208,7 +213,10 @@ If(
    | Group Retention % | same, with `varBase.'Group Retention %'` |
 
    - **scrPlan.OnVisible:** `Set(varUseBase, false); ResetForm(frmPlan)`
-   - Button **btnFillMFP**: Text `"Fill in from MFP"`, **Visible** `!IsBlank(varBase)`, **OnSelect** `Set(varUseBase, true)`. The numbers appear in the boxes; nothing is saved until **Save plan**.
+   - Button **btnFillMFP**: Text `"Fill in from MFP"`, **Visible** `!IsBlank(varBase)`, **OnSelect** `Set(varUseBase, true)`. The numbers appear in the boxes; nothing is saved until **Save plan**. Layout: **X** `btnSavePlan.X`, **Width** `btnSavePlan.Width`, **Height** `btnSavePlan.Height`, **Size** `btnSavePlan.Size`, **Y** `btnSavePlan.Y - btnSavePlan.Height - 10`; and **frmPlan.Height** `If(btnFillMFP.Visible, btnFillMFP.Y, btnSavePlan.Y) - frmPlan.Y - 10`.
+   - Add `; Set(varUseBase, false)` to the end of **frmPlan.OnSuccess**.
+   - New form cards are locked: select the card, **Advanced → Unlock to change properties**.
+   - **Checked live (October 12, 2026), 2027 Spring:** the form opened with KJS's MFP numbers (16,369 units, 77 groups, 58% unit and 57.6% group retention, 212.6 per group). Unit Goal 18,000 at 9% → 41 new groups and 490 sales calls on Home.
    - Optional label under the title: `If(IsBlank(varBase), "", varBase.'Retained Groups' & " of " & varBase.'Base Season Groups' & " " & varBase.'Retention Measured From' & " groups came back last year")`
 
 5. **Live preview under the form** (optional), so the rep sees the calls needed before saving. Add a label with **Text**:
