@@ -24,12 +24,15 @@ This page shows how the old **Accountable Sales Planning Tool** workbook maps on
 
 ### Retention: one definition everywhere
 
-**For planning (from 2027 Spring on): a group is retained if it ran, any program, in the same season the year before** (Spring to Spring, Fall to Fall). Lynwood, October 2026. Set **Retention Rule** on these seasons to "Any program, same season last year".
+**For planning (from 2027 Spring on): a group is RETURNING if it ran, any program, in either of the two seasons before; it's NEW if it ran in neither, the whole previous year** (Lynwood, October 2026). For Spring 2027: new means it didn't run Fall 2026 or Spring 2026. Seasons are always by delivery date. Set **Retention Rule** on these seasons to "Any program, either season last year".
 
-Example, planning **2027 Spring**: of the rep's Spring 2025 groups, the ones they ran again in Spring 2026 are retained. That gives two rates, both filled in from MFP by `tools/build_plan_baseline.py`:
+Planning **2027 Spring**, measured on the year before (`tools/build_plan_baseline.py`):
 
-- **Unit Retention %** = Spring 2026 units from those returning groups ÷ the rep's Spring 2025 units. The plan math uses this one.
-- **Group Retention %** = returning groups ÷ the rep's Spring 2025 groups. For reference.
+- **Unit Retention %** = Spring 2026 units from returning groups (ran Fall 2025 or Spring 2025) ÷ the rep's Spring 2025 units. The plan math uses this one.
+- **Group Retention %** = Spring 2026 returning groups ÷ the rep's Spring 2025 groups. For reference.
+- The weekly **MFP New Groups** uses the same rule, so the plan's New Groups Needed and the groups actually booked are counted alike.
+
+Using the whole year rather than the same season moved about 22 of 143 Spring 2026 "new" groups to returning: groups that ran the fall before.
 
 **Each group's whole history is credited to the rep who owns it now** (Lynwood, October 2026), after the rollups and placed groups in `tools/mfp_rules.py`. So the groups moved from BPR to KJS count as KJS's in both years, and as retained for KJS if they ran both years. "Owns it now" is the group's current owning user in MFP if the pull includes it, otherwise the owner of its most recent fundraiser in the pull.
 
@@ -149,7 +152,7 @@ Each rep's starting numbers for a season, worked out from the MFP pull by `tools
 | Prior Year Units, Prior Year Groups, Avg Units per Group | Same season last year |
 | Unit Retention %, Group Retention % | Measured from the season two years back to last year (see Retention above) |
 | Retention Measured From, Base Season Units / Groups, Retained Units / Groups | The working, so the percentages can be checked |
-| MFP Units to Date, MFP New Groups, MFP New Groups 12 Mo, MFP As Of | Loaded weekly from MFP ([docs/05](05-mfp-yearly-pull.md#weekly-mfp-numbers-units-to-date-and-new-groups)). Home and Team use these instead of rep-typed units and bookings |
+| MFP Units to Date, MFP New Groups, MFP New Groups Last 2 Seasons, MFP As Of | Loaded weekly from MFP ([docs/05](05-mfp-yearly-pull.md#weekly-mfp-numbers-units-to-date-and-new-groups)). Home and Team use these instead of rep-typed units and bookings |
 
 ## Daily Activity (one row per rep × selling day)
 
@@ -158,9 +161,9 @@ Each rep's starting numbers for a season, worked out from the MFP pull by `tools
 | Season | Lookup to Seasons |
 | Activity Date | The day the activity happened |
 | Sales Calls | Sales calls that day, in person or by phone |
-| New Groups | New groups booked that day: any group that **did not run in the same season last year** (never run, or lapsed), the same "new" the plan's New Groups Needed counts. A retained group re-booking is not logged here (Lynwood, October 2026). Optional, but it shows the real close rate |
+| New Groups | No longer typed by reps (October 2026): new groups come from MFP weekly (MFP New Groups on Rep Baselines). Kept for old rows |
 | Gatekeeper Contacts, New Groups Booked – Gatekeeper | Unused; the app saves 0 |
-| MFP Units Season-to-Date | Optional. The running total from the MFP dashboard, entered whenever the rep checks it (at least weekly). The most recent entry counts. |
+| MFP Units Season-to-Date | No longer typed by reps (October 2026); MFP Units to Date on Rep Baselines replaces it. Was: optional. The running total from the MFP dashboard, entered whenever the rep checks it (at least weekly). The most recent entry counts. |
 | Notes | Wins, blockers |
 | Sales Day | Calculated: 1 if any sales calls were logged that day. Adds up to the sales days count |
 

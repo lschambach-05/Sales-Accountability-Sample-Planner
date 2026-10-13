@@ -1,85 +1,80 @@
-"""Weekly MFP numbers for each rep's scorecard: season-to-date units and new groups booked.
+"""Weekly MFP numbers for each rep's scorecard: season-to-date units and new groups booked. All by delivery date.
 
-Usage: python tools/build_rep_progress.py <weekly MFP pull .csv> "<planner season>" <as-of date YYYY-MM-DD> <output .csv>
-  e.g. python tools/build_rep_progress.py "MFP progress 2027-03-08.csv" "2027 Spring" 2027-03-08 "Rep Progress 2027 Spring.csv"
+Usage: python tools/build_rep_progress.py "<planner season>" <as-of date YYYY-MM-DD> <output .csv> <weekly MFP pull .csv> [more .csv ...]
+  e.g. python tools/build_rep_progress.py "2027 Spring" 2027-03-08 "Rep Progress 2027 Spring.csv" "MFP progress 2027-03-08.csv"
 
 Rules (Lynwood, October 2026):
-  MFP Units to Date  = units on the rep's fundraisers delivered in the current season (canceled left out).
-  MFP New Groups     = groups booked for the current season (not canceled) that did NOT run in the same season
-                       last year: never ran, or lapsed. The same "new" the plan's New Groups Needed counts.
-  MFP New Groups 12 Mo = new groups (same rule, each against its own season a year earlier) whose fundraiser was
-                       booked ("Booked On") in the 12 months up to the as-of date. Divided by the sales calls reps
-                       logged in the same 12 months, this is the close rate on Home and Team.
-  Each group counts for the rep who owns it now (mfp_rules.current_owners). A booking counts once per group per
-  season. An Open fundraiser with nothing sold more than 30 days after its delivery date is treated as dead.
+  MFP Units to Date     = units on the rep's fundraisers delivered in the current season (canceled left out).
+  MFP New Groups        = groups booked for the current season (by delivery date, not canceled) that did NOT run
+                          in either of the two seasons before - for Spring 2027: not Fall 2026 and not Spring 2026.
+                          The same "new" as the plan baseline (build_plan_baseline.py).
+  MFP New Groups 12 Mo  = new groups (same rule, each against the year before its own season) in the current season
+                          plus the season before - about a year of bookings. Divided by the sales calls reps logged in
+                          the last 12 months, this is the close rate on Home and Team. The fundraiser's "Booked On" date
+                          isn't used: groups often book a year ahead, so it doesn't show when the sale was won.
+  Each group counts for the rep who owns it now (mfp_rules.current_owners), once per season. An Open fundraiser with
+  nothing sold more than 30 days after its delivery date is treated as dead.
 
-The pull must cover deliveries from the start of the same season two years back to the end of the current season
-(for 2027 Spring: January 1, 2025 to June 30, 2027), and include each fundraiser's "Booked On" date.
-The output CSV is what tools/Import-RepProgress.ps1 loads into the Rep Baselines list.
+The pull must cover deliveries from the start of the season three seasons back to the end of the current season
+(for 2027 Spring: July 1, 2025 to June 30, 2027). The output CSV is what tools/Import-RepProgress.ps1 loads.
 """
-import sys, csv, collections, datetime as dt
-from mfp_rules import units, load, split_counted, current_owners
+import sys, collections, csv, datetime as dt
+from mfp_rules import units, load, split_counted, current_owners, seasons_before
 
-SRC, TARGET, ASOF, OUT = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+TARGET, ASOF, OUT, SRCS = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
 asof = dt.date.fromisoformat(ASOF)
-year, half = TARGET.split()                          # planner "2027 Spring" -> MFP "Spring 2027"
-season = f'{half} {year}'
+year, half = TARGET.split()
+season = f'{half} {year}'                            # MFP name, "Spring 2027"
+last = seasons_before(season, 1)[0]                  # "Fall 2026"
 
-def d(s):
-    return dt.date.fromisoformat(s[:10]) if s else None
-
-def last_year(s):                                    # "Spring 2027" -> "Spring 2026"
-    h, y = s.split(); return f'{h} {int(y) - 1}'
-
-rows = load(SRC)
+rows = load(*SRCS)
 counted, _ = split_counted(rows)                     # closed or invoiced: these "ran"
 owner, source = current_owners(rows, counted)
-
-ran = collections.defaultdict(set)                   # season -> groups that ran
+ran = collections.defaultdict(set)
 for r in counted:
     ran[r['Season']].add(r['Group ID'])
 
+needed = seasons_before(season, 3)                   # history needed to judge "new" for this season and last
+missing = [s for s in needed if s not in ran]
+if missing:
+    sys.exit(f'The pull has no fundraisers for {", ".join(missing)}. Widen the date window (see notes at the top).')
+
 def is_booking(r):
-    """A live booking: not canceled, and not an unsold Open fundraiser well past its delivery date."""
     if r['Status'] == 'Canceled':
         return False
-    delivered = d(r['Delivery Date'])
+    delivered = dt.date.fromisoformat(r['Delivery Date'][:10]) if r['Delivery Date'] else None
     if r['Status'] == 'Open' and units(r) <= 0 and delivered and (asof - delivered).days > 30:
         return False
     return True
 
-bookings = [r for r in rows if is_booking(r)]
-missing_booked_on = sum(1 for r in bookings if not r.get('Booked On'))
-seasons_needed = {season, last_year(season)}
-if not seasons_needed <= set(ran) | {r['Season'] for r in bookings}:
-    sys.exit(f'The pull is missing {sorted(seasons_needed - set(ran))}. See the date window in this script\'s notes.')
+def is_new(g, s):
+    return not any(g in ran[p] for p in seasons_before(s))
 
 units_to_date = collections.Counter()
 new_season = collections.defaultdict(set)
-new_12mo = collections.defaultdict(set)
-for r in bookings:
+new_year = collections.defaultdict(set)
+for r in rows:
+    if not is_booking(r):
+        continue
     g, rep, s = r['Group ID'], owner[r['Group ID']], r['Season']
     if s == season:
         units_to_date[rep] += units(r)
-    is_new = g not in ran[last_year(s)]
-    if s == season and is_new:
-        new_season[rep].add(g)
-    booked = d(r.get('Booked On', ''))
-    if is_new and booked and 0 <= (asof - booked).days <= 365:
-        new_12mo[rep].add((g, s))
+        if is_new(g, s):
+            new_season[rep].add(g)
+    if s in (season, last) and is_new(g, s):
+        new_year[rep].add((g, s))
 
-reps = sorted((set(units_to_date) | set(new_season) | set(new_12mo)) - {'Unassigned'})
+reps = sorted((set(units_to_date) | set(new_season) | set(new_year)) - {'Unassigned'})
 out = [{'Season': TARGET, 'Rep Code': rep, 'MFP Units to Date': round(units_to_date[rep]),
-        'MFP New Groups': len(new_season[rep]), 'MFP New Groups 12 Mo': len(new_12mo[rep]), 'As Of': ASOF}
+        'MFP New Groups': len(new_season[rep]), 'MFP New Groups 12 Mo': len(new_year[rep]), 'As Of': ASOF}
        for rep in reps]
 with open(OUT, 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=list(out[0])); w.writeheader(); w.writerows(out)
 
-print(f'{TARGET} as of {ASOF}; groups credited to current owner from {source}')
+print(f'{TARGET} as of {ASOF}; new = not run in the two seasons before; 12-month count = {last} + {season}; '
+      f'groups credited to current owner from {source}')
 print(f"{'Rep':5}{'Units':>9}{'New grps':>10}{'New 12 mo':>11}")
 for r in out:
     print(f"{r['Rep Code']:5}{r['MFP Units to Date']:>9,}{r['MFP New Groups']:>10}{r['MFP New Groups 12 Mo']:>11}")
 print(f"Season units, all reps: {sum(units_to_date[r] for r in reps):,.0f} "
       f"(left out, groups whose owner isn't a current rep: {units_to_date['Unassigned']:,.0f})")
-if missing_booked_on:
-    print(f'WARNING: {missing_booked_on} bookings have no Booked On date; they are left out of the 12-month count.')

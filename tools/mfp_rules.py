@@ -32,9 +32,14 @@ def rep_of(code):
 
 def units(r): return float(r['Units'] or 0)
 
-def load(path):
-    """Read the pull CSV and fold duplicate group records together (GROUP_MERGES)."""
-    rows = list(csv.DictReader(open(path, newline='', encoding='utf-8-sig')))
+def load(*paths):
+    """Read one or more pull CSVs and fold duplicate group records together (GROUP_MERGES). When the same
+    fundraiser is in more than one file, the later file wins."""
+    by_id = {}
+    for path in paths:
+        for r in csv.DictReader(open(path, newline='', encoding='utf-8-sig')):
+            by_id[r['Fundraiser ID']] = r
+    rows = list(by_id.values())
     for r in rows:
         r['Original Group ID'] = r['Group ID']
         r['Group ID'] = GROUP_MERGES.get(r['Group ID'], r['Group ID'])
@@ -71,3 +76,11 @@ def current_owners(rows, counted):
         return OWNER_OVERRIDES.get(g) or rep_of(last)
     source = "the pull's Group Owner column" if group_owner else 'the most recent fundraiser in the pull'
     return {g: owner(g, v[1]) for g, v in latest.items()}, source
+
+def seasons_before(season, n=2):
+    """The n seasons just before an MFP season name: seasons_before('Spring 2027') -> ['Fall 2026', 'Spring 2026']."""
+    half, year = season.split(); year = int(year); out = []
+    for _ in range(n):
+        half, year = ('Fall', year - 1) if half == 'Spring' else ('Spring', year)
+        out.append(f'{half} {year}')
+    return out

@@ -442,7 +442,7 @@ Rename-Fields $RB @{
     RetainedGroups    = 'Retained Groups'
     MFPUnitsToDate    = 'MFP Units to Date'
     MFPNewGroups      = 'MFP New Groups'
-    MFPNewGroups12    = 'MFP New Groups 12 Mo'
+    MFPNewGroups12    = 'MFP New Groups Last 2 Seasons'
     MFPAsOf           = 'MFP As Of'
 }
 Set-PnPView -List $RB -Identity 'All Items' -Fields 'Season', 'RepCode', 'RepUser', 'PriorUnits', 'PriorGroups', 'AvgUnitsPerGroup',

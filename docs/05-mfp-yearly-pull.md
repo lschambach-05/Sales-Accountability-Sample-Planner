@@ -106,15 +106,17 @@ The sales data itself is kept in SharePoint, not in this repository.
 
 Before a season, work out each rep's starting numbers from the pull and load them into the **Rep Baselines** list. My Plan then fills them in, so reps only add their Unit Goal and close rate.
 
-**Which seasons the pull needs:** the same season in the two years before. For **2027 Spring**: Spring 2025 and Spring 2026 (the prompt above). For **2027 Fall**, in June: Fall 2025 and Fall 2026.
+**Which seasons the pull needs:** the same season two years back through last season. For **2027 Spring**: Spring 2025, Fall 2025 and Spring 2026. For **2027 Fall**, in June: Fall 2025, Spring 2026 and Fall 2026. The weekly pull's window covers these too.
 
 1. Work out the numbers (one CSV per season planned):
 
    ```bash
-   python tools/build_plan_baseline.py "MFP group sales 2025-2026.csv" "2027 Spring" "Plan Baseline 2027 Spring.csv"
+   python tools/build_plan_baseline.py "2027 Spring" "Plan Baseline 2027 Spring.csv" "MFP group sales 2024-2025.csv" "MFP group sales Spring 2025-2026.csv"
    ```
 
-   It prints a table per rep to check. The rules are in [02-data-model.md](02-data-model.md#retention-one-definition-everywhere): same season, any program; each group's history goes to the rep who owns it now; average = all of the rep's groups last season.
+   It needs the same season two years back through last season (for 2027 Spring: Spring 2025, Fall 2025 and Spring 2026); several pull files can be listed.
+
+   It prints a table per rep to check. The rules are in [02-data-model.md](02-data-model.md#retention-one-definition-everywhere): returning = ran in either season of the year before, new = ran in neither; each group's history goes to the rep who owns it now; average = all of the rep's groups last season.
 
 2. Make sure the season exists in the **Seasons** list and every rep is in the **Reps** list with their **MFP Owning User Code** and **Rep** person filled in.
 
@@ -135,33 +137,34 @@ Before a season, work out each rep's starting numbers from the pull and load the
 
 ## Weekly MFP numbers (units to date and new groups)
 
-Reps only log **sales calls** in the app. Season-to-date units and new groups booked come from MFP once a week (Monday morning, before the manager digest), so they're never more than a week old. Home and Team show the date of the last pull.
+Reps only log **sales calls** in the app; Log a Day shows the MFP numbers but they can't be changed there. Season-to-date units and new groups booked come from MFP once a week (Monday morning, before the manager digest), so they're never more than a week old. Home, Log a Day and Team show the date of the last pull.
 
 1. In a Claude-with-Chrome session, logged in to MFP, run the prompt above with these changes:
-   - **Date window:** deliveries from the start of the same season two years back to the end of the current season (for 2027 Spring: January 1, 2025 to June 30, 2027).
-   - **Extra column:** **Booked On**, the date the fundraiser was booked in MFP.
+   - **Date window:** deliveries from the start of the season three seasons back to the end of the current season (for 2027 Spring: July 1, 2025 to June 30, 2027). Upcoming bookings with no delivery yet are included by start date, as usual.
    - Keep **Group Owner** (the group's current owning user).
    - Save as `MFP progress YYYY-MM-DD.csv` in the same folder.
 2. Work out the numbers:
 
    ```bash
-   python tools/build_rep_progress.py "MFP progress 2027-03-08.csv" "2027 Spring" 2027-03-08 "Rep Progress 2027 Spring.csv"
+   python tools/build_rep_progress.py "2027 Spring" 2027-03-08 "Rep Progress 2027 Spring.csv" "MFP progress 2027-03-08.csv"
    ```
 
-3. Load them (updates the rep's Rep Baselines row; nothing else changes):
+3. Load them (updates only the MFP columns on each rep's Rep Baselines row):
 
    ```powershell
    ./tools/Import-RepProgress.ps1 -SiteUrl https://ritebitefundraising.sharepoint.com/sites/SalesPlanner -ClientId <client id> -CsvPath "Rep Progress 2027 Spring.csv"
    ```
 
+Everything is by **delivery date** (the season a fundraiser runs in). MFP's "Booked On" date isn't used: groups often book a year ahead, so it doesn't show when the sale was won (Lynwood, October 2026).
+
 | Column | Rule |
 |---|---|
 | MFP Units to Date | Units on the rep's fundraisers delivered in the current season (canceled left out) |
-| MFP New Groups | Groups booked for the current season that did not run in the same season last year |
-| MFP New Groups 12 Mo | New groups booked (by **Booked On**) in the 12 months up to the pull; the close rate is this ÷ sales calls logged in the same 12 months |
+| MFP New Groups | Groups booked for the current season that didn't run in either of the two seasons before (for Spring 2027: not Fall 2026, not Spring 2026) |
+| MFP New Groups Last 2 Seasons | New groups in the current season plus the one before, about a year of bookings. The close rate is this ÷ sales calls logged in the last 12 months |
 | MFP As Of | The pull date |
 
-Each group counts for the rep who owns it **now**: the owner on the group's record in MFP. A booking counts once per group per season. An Open fundraiser with nothing sold more than 30 days after its delivery date doesn't count. Checked October 2026 against the Spring 2025–2026 pull (Spring 2026 as the season): units and new groups per rep matched the plan baseline exactly.
+Each group counts for the rep who owns it **now** (the owner on the group's record in MFP), once per season. An Open fundraiser with nothing sold more than 30 days after its delivery date doesn't count. Checked October 2026 with Spring 2026 as the season: units (112,124) and new groups per rep matched the plan baseline.
 
 ## Group locations (for placing unassigned groups)
 

@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Loads the weekly MFP numbers (from tools/build_rep_progress.py) onto each rep's Rep Baselines row:
-    MFP Units to Date, MFP New Groups, MFP New Groups 12 Mo and MFP As Of.
+    MFP Units to Date, MFP New Groups, MFP New Groups Last 2 Seasons and MFP As Of.
 
 .DESCRIPTION
     Matches rows by season and MFP Owning User Code. Rows are normally created by Import-RepBaselines.ps1
@@ -62,7 +62,7 @@ foreach ($r in $rows) {
         Set-PnPListItemPermission -List $List -Identity $item.Id -Group $ManagersGroup -AddRole 'Full Control' -ClearExisting
         Set-PnPListItemPermission -List $List -Identity $item.Id -User $repEmail[$code] -AddRole 'Read'
     }
-    Write-Host ("   {0} {1}: {2} units, {3} new groups this season, {4} in 12 months (as of {5})" -f `
+    Write-Host ("   {0} {1}: {2} units, {3} new groups this season, {4} over the last 2 seasons (as of {5})" -f `
         $r.Season, $code, $r.'MFP Units to Date', $r.'MFP New Groups', $r.'MFP New Groups 12 Mo', $r.'As Of')
 }
 

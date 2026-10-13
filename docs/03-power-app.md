@@ -158,7 +158,7 @@ Set(varExisting, LookUp(colMyDays,
 | Control | Default | Hint text |
 |---|---|---|
 | txtDirect | `varExisting.'Sales Calls'` | Sales calls today |
-| txtDirBook | `varExisting.'New Groups'` | `"New groups booked (didn't run last " & Last(Split(varSeason.Season, " ")).Value & ")"` (follows the season: "last Spring" / "last Fall") |
+| (removed October 2026) | | New groups and season-to-date units now come from MFP weekly and show read-only in **lblMFPNumbers** |
 | txtUnits | `varExisting.'MFP Units Season-to-Date'` | MFP season-to-date units (if you checked today) |
 | txtNotes | `varExisting.Notes` | Notes |
 
