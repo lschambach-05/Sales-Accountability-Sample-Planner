@@ -134,6 +134,8 @@ Parent.Width * Min(1, IfError(varDirectDone / varDirectTarget, 0))      // use t
 
 There's deliberately **no red/amber "behind pace" colour**. Selling comes in bursts, so being at 20% of target halfway through the season can be fine. Compare the progress bar with the "% of the season gone" in the header, and look at the **New groups** and **Close rate** tiles. If the 12-month close rate is below plan, the targets are too low and more calls will be needed. Close rates use a full year because a spring call can book a fall group, so one season alone is misleading.
 
+**Button layout** (X 20, Width 600): btnGoLog Y 700, Height 70; btnGoPlan Y `btnGoLog.Y + btnGoLog.Height + 15`; btnGoTeam Y `btnGoPlan.Y + btnGoPlan.Height + 15`; **btnExit** Y `btnGoTeam.Y + btnGoTeam.Height + 40`, Height 55, Text `"Exit"`, OnSelect `Exit()` (closes the app without signing out; the iPhone player has no visible close button), Fill `Color.LightGray`, Color `Color.Black`.
+
 **Buttons:** "Log a Day" → `Navigate(scrLog)`, "My Plan" → `Navigate(scrPlan)`, "Season Results" → `Navigate(scrResults)`, "Team" → `Navigate(scrTeam)` with **Visible** = `varIsManager`.
 
 **Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'Sales Calls' & " sales calls, " & ThisItem.'New Groups' & " new groups"`. (Display only. To edit an earlier day, the rep opens Log a Day and picks that date.)
@@ -156,7 +158,7 @@ Set(varExisting, LookUp(colMyDays,
 | Control | Default | Hint text |
 |---|---|---|
 | txtDirect | `varExisting.'Sales Calls'` | Sales calls today |
-| txtDirBook | `varExisting.'New Groups'` | New groups booked today |
+| txtDirBook | `varExisting.'New Groups'` | `"New groups booked (didn't run last " & Last(Split(varSeason.Season, " ")).Value & ")"` (follows the season: "last Spring" / "last Fall") |
 | txtUnits | `varExisting.'MFP Units Season-to-Date'` | MFP season-to-date units (if you checked today) |
 | txtNotes | `varExisting.Notes` | Notes |
 
@@ -248,8 +250,22 @@ If(
    Replace each `<… input>` with the control name Power Apps gave that field's text box (for example `DataCardValue5`).
 6. **Save button** `btnSavePlan`: **Text** `"Save plan"`, **OnSelect** `SubmitForm(frmPlan)`
 7. **frmPlan.OnSuccess:** `ClearCollect(colMyPlans, Filter('Program Plans', Season.Id = varSeason.ID && 'Created By'.Email = User().Email)); Notify("Plan saved", NotificationType.Success)`
-8. **scrPlan.OnVisible:** `ResetForm(frmPlan)`, so the form opens on the rep's plan, or a blank one if they haven't made one yet.
-9. **Back button:** `Navigate(scrHome)`
+8. **scrPlan.OnVisible:** `Set(varUseBase, false); ResetForm(frmPlan); Set(varPlanDirty, false); Set(varLeaveWarned, false)`, so the form opens on the rep's saved plan, or a blank one if they haven't made one yet.
+9. **Unsaved-changes warning on Back.** Each visible box's text input (the DataCardValue inside the card, not the card) gets **OnChange** `Set(varPlanDirty, true)`. Back button **OnSelect**:
+
+   ```powerfx
+   If((varPlanDirty || varUseBase || frmPlan.Mode = FormMode.New) && !varLeaveWarned,
+       Set(varLeaveWarned, true);
+       Notify("Your plan isn't saved. Tap Save plan, or tap Back again to leave without saving.", NotificationType.Warning),
+       ResetForm(frmPlan);
+       Set(varUseBase, false);
+       Set(varLeaveWarned, false);
+       Navigate(scrHome);
+       Set(varPlanDirty, false)
+   )
+   ```
+
+   Add `; Set(varPlanDirty, false); Set(varLeaveWarned, false)` to **frmPlan.OnSuccess**. Two lessons from the live build (October 2026): `frmPlan.Unsaved` reported changes when there were none (likely the hidden cards and the ×100 percent boxes), and the form must be reset on the way **out**; resetting on the way in changes the boxes, fires OnChange and gives a false warning.
 
 The yellow delegation warning on the form (about `Season.Id`) is harmless here: the app reads up to 500 rows and filters them on the phone, and there are about 12 plan rows a year.
 
