@@ -157,7 +157,7 @@ Each rep's starting numbers for a season, worked out from the MFP pull by `tools
 | Season | Lookup to Seasons |
 | Activity Date | The day the activity happened |
 | Sales Calls | Sales calls that day, in person or by phone |
-| New Groups | New groups booked that day. Optional, but it shows the real close rate |
+| New Groups | New groups booked that day: any group that **did not run in the same season last year** (never run, or lapsed), the same "new" the plan's New Groups Needed counts. A retained group re-booking is not logged here (Lynwood, October 2026). Optional, but it shows the real close rate |
 | Gatekeeper Contacts, New Groups Booked – Gatekeeper | Unused; the app saves 0 |
 | MFP Units Season-to-Date | Optional. The running total from the MFP dashboard, entered whenever the rep checks it (at least weekly). The most recent entry counts. |
 | Notes | Wins, blockers |
