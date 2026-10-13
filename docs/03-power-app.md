@@ -85,10 +85,20 @@ If(varIsManager,
     ClearCollect(colAllDays,  Filter('Daily Activity', Season.Id = varSeason.ID));
     ClearCollect(colAllRows,  'Daily Activity');
     ClearCollect(colAllYear,  Filter(colAllRows, 'Activity Date' >= DateAdd(Today(), -365, TimeUnit.Days)));
-    ClearCollect(colReps,     Filter(Reps, Active = true))
+    ClearCollect(colReps,     Filter(Reps, Active = true));
+    ClearCollect(colAllBase,  Filter('Rep Baselines', Season.Id = varSeason.ID))   // managers can see every rep's row
 );
 // This rep's starting numbers from MFP for the season (My Plan pre-fills from it)
-Set(varBase, LookUp('Rep Baselines', Season.Id = varSeason.ID && Lower(Rep.Email) = Lower(User().Email)))
+Set(varBase, LookUp('Rep Baselines', Season.Id = varSeason.ID && Lower(Rep.Email) = Lower(User().Email)));
+
+// Units and new groups come from the weekly MFP pull (Rep Baselines), not from what reps type.
+// These replace the earlier varUnits / varBooked / varDirClose12 values above.
+Set(varUnits,  varBase.'MFP Units to Date' + 0);
+Set(varBooked, varBase.'MFP New Groups' + 0);
+// Close rate = new groups in this season + last season (MFP) / sales calls logged in the last 12 months.
+// Calls are only logged from go-live, so for the first year this reads high; under 20 calls it shows as "-".
+Set(varCalls12, Sum(colMyYear, 'Sales Calls') + 0);
+Set(varDirClose12, IfError((varBase.'MFP New Groups Last 2 Seasons' + 0) / varCalls12, 0))
 ```
 
 **In the editor,** variables keep their last value until the formula runs again. **Run OnStart** (⋯ next to App) reloads the season but not btnLoad; btnLoad runs when Home opens, so Play, go to another screen and come back.
@@ -124,7 +134,15 @@ Select(btnLoad)
 | New groups | `varBooked & " / " & RoundUp(varGroupsNeeded, 0)` | `"booked of needed this season"` |
 | Close rate (12 months) | `Text(varDirClose12 * 100, "0") & "%"` | `"plan " & Text(Value(First(colMyPlans).'Sales Call Close %') * 100, "0") & "%"` |
 
-On the live build each tile is one label with `Char(10)` line breaks, for example the close-rate tile: `"CLOSE RATE (LAST 12 MONTHS)" & Char(10) & Text(varDirClose12 * 100, "0") & "% · plan " & Text(Value(First(colMyPlans).'Sales Call Close %') * 100, "0") & "%"`
+On the live build each tile is one label with `Char(10)` line breaks, for example the close-rate tile:
+
+```powerfx
+"CLOSE RATE (LAST 12 MONTHS)" & Char(10) &
+If(varCalls12 < 20, "- (needs 20+ calls logged)", Text(varDirClose12 * 100, "0") & "%") &
+" · plan " & Text(Value(First(colMyPlans).'Sales Call Close %') * 100, "0") & "%"
+```
+
+The units tile adds the MFP date on a third line: `... & Char(10) & "MFP as of " & If(IsBlank(varBase.'MFP As Of'), "not pulled yet", Text(varBase.'MFP As Of', "mmm d"))`. Units and new groups come from the weekly MFP pull (Rep Baselines), so they move on Mondays, not when a rep logs a day.
 
 **Progress bars (optional, nice on a phone).** Under each activity tile, add a grey rectangle the full width, and on top of it a coloured rectangle with **Width**:
 
@@ -138,11 +156,22 @@ There's deliberately **no red/amber "behind pace" colour**. Selling comes in bur
 
 **Buttons:** "Log a Day" → `Navigate(scrLog)`, "My Plan" → `Navigate(scrPlan)`, "Season Results" → `Navigate(scrResults)`, "Team" → `Navigate(scrTeam)` with **Visible** = `varIsManager`.
 
-**Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'Sales Calls' & " sales calls, " & ThisItem.'New Groups' & " new groups"`. (Display only. To edit an earlier day, the rep opens Log a Day and picks that date.)
+**Recent days (optional):** a small gallery with Items `FirstN(colMyDays, 5)`, showing `Text(ThisItem.'Activity Date', "ddd mmm d") & ": " & ThisItem.'Sales Calls' & " sales calls"`. (Display only. To edit an earlier day, the rep opens Log a Day and picks that date.)
 
 ## 3. scrLog – Log a Day
 
-Controls: a date picker `dpDate`; text inputs (Format = Number) `txtDirect` (sales calls), `txtDirBook` (new groups), `txtUnits`; and a multi-line text input `txtNotes`.
+Controls: a date picker `dpDate`; a text input (Format = Number) `txtDirect` (sales calls); a read-only label `lblMFPNumbers`; and a multi-line text input `txtNotes`. Reps only type sales calls and notes. New groups and units come from the weekly MFP pull.
+
+**Layout** (X 20, Width `Parent.Width - 40` on each): title label Y 5, Height 50, Size 20, Bold, VerticalAlign Middle; dpDate Y 60; txtDirect Y `dpDate.Y + dpDate.Height + 15`; lblMFPNumbers Y `txtDirect.Y + txtDirect.Height + 15`, Height 100, Fill light grey; txtNotes Y `lblMFPNumbers.Y + lblMFPNumbers.Height + 15`, Height 220; btnSave Y `txtNotes.Y + txtNotes.Height + 20`; btnBack Y `btnSave.Y + btnSave.Height + 15`.
+
+**lblMFPNumbers.Text:**
+
+```powerfx
+"From MFP (updated weekly)" & Char(10) &
+"New groups booked this season: " & (varBase.'MFP New Groups' + 0) & Char(10) &
+"Season-to-date units: " & Text(varBase.'MFP Units to Date' + 0, "#,##0") & " · as of " &
+If(IsBlank(varBase.'MFP As Of'), "not pulled yet", Text(varBase.'MFP As Of', "mmm d"))
+```
 
 **dpDate.DefaultDate:** `Today()`
 
@@ -158,8 +187,6 @@ Set(varExisting, LookUp(colMyDays,
 | Control | Default | Hint text |
 |---|---|---|
 | txtDirect | `varExisting.'Sales Calls'` | Sales calls today |
-| (removed October 2026) | | New groups and season-to-date units now come from MFP weekly and show read-only in **lblMFPNumbers** |
-| txtUnits | `varExisting.'MFP Units Season-to-Date'` | MFP season-to-date units (if you checked today) |
 | txtNotes | `varExisting.Notes` | Notes |
 
 **Save button OnSelect:**
@@ -179,10 +206,8 @@ If(
                 Season: { Id: varSeason.ID, Value: varSeason.Season },
                 'Activity Date': dpDate.SelectedDate,
                 'Sales Calls': Value(txtDirect.Text),
-                'New Groups': Value(txtDirBook.Text),
                 'Gatekeeper Contacts': 0,             // unused; 0 keeps the Sales Day formula working
                 'New Groups Booked - Gatekeeper': 0,
-                'MFP Units Season-to-Date': If(IsBlank(txtUnits.Text), Blank(), Value(txtUnits.Text)),
                 Notes: txtNotes.Text
             }),
         Notify("Couldn't save: " & FirstError.Message, NotificationType.Error),
@@ -312,20 +337,22 @@ Home's **Team** button: `Navigate(scrTeam)`, **Visible** `varIsManager`. Everyth
            With({
                p: Filter(colAllPlans, Lower('Created By'.Email) = Lower(r.Rep.Email)),
                d: Sort(Filter(colAllDays, Lower('Created By'.Email) = Lower(r.Rep.Email)), 'Activity Date', SortOrder.Descending),
-               y: Filter(colAllYear, Lower('Created By'.Email) = Lower(r.Rep.Email))
+               y: Filter(colAllYear, Lower('Created By'.Email) = Lower(r.Rep.Email)),
+               b: LookUp(colAllBase, Lower(Rep.Email) = Lower(r.Rep.Email))
            },
            {
                RepName:     r.'Rep Name',
                Code:        r.'MFP Owning User Code',
                Goal:        Sum(p, 'Sales Goal Units') + 0,
-               Units:       First(Filter(d, !IsBlank('MFP Units Season-to-Date'))).'MFP Units Season-to-Date' + 0,
+               Units:       b.'MFP Units to Date' + 0,
                CallsDone:   Sum(d, 'Sales Calls') + 0,
                CallsTarget: Sum(p, 'Sales Calls Target') + 0,
-               Booked:      Sum(d, 'New Groups') + 0,
+               Booked:      b.'MFP New Groups' + 0,
                Needed:      RoundUp(Sum(p, 'Plan - New Groups Needed') + 0, 0),
                SalesDays:   Sum(d, 'Sales Day') + 0,
                LastDay:     First(d).'Activity Date',
-               Close12:     IfError(Sum(y, 'New Groups') / Sum(y, 'Sales Calls'), 0),
+               Calls12:     Sum(y, 'Sales Calls') + 0,
+               Close12:     IfError((b.'MFP New Groups Last 2 Seasons' + 0) / Sum(y, 'Sales Calls'), 0),
                PlanClose:   First(p).'Sales Call Close %',
                HasPlan:     CountRows(p) > 0
            })
@@ -341,7 +368,7 @@ Home's **Team** button: `Navigate(scrTeam)`, **Visible** `varIsManager`. Everyth
    "Units " & Text(ThisItem.Units, "#,##0") & " of " & Text(ThisItem.Goal, "#,##0") & " (" & Text(IfError(ThisItem.Units / ThisItem.Goal, 0) * 100, "0") & "%)" & Char(10) &
    "Sales calls " & ThisItem.CallsDone & " of " & ThisItem.CallsTarget & Char(10) &
    "Groups " & ThisItem.Booked & " of " & ThisItem.Needed & " · " & ThisItem.SalesDays & " selling days · last " & If(IsBlank(ThisItem.LastDay), "never", Text(ThisItem.LastDay, "mmm d")) & Char(10) &
-   "Close (12 mo) " & Text(ThisItem.Close12 * 100, "0") & "% · plan " & Text(Value(ThisItem.PlanClose) * 100, "0") & "%"
+   "Close (12 mo) " & If(ThisItem.Calls12 < 20, "-", Text(ThisItem.Close12 * 100, "0") & "%") & " · plan " & Text(Value(ThisItem.PlanClose) * 100, "0") & "%"
    ```
 
    and **lblNoPlan** (X 420, Y 5, W 150): Text `"No plan yet"`, Color `Color.Red`, FontWeight `FontWeight.Bold`, **Visible** `!ThisItem.HasPlan`.
