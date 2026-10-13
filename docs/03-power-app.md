@@ -93,7 +93,16 @@ Set(varBase, LookUp('Rep Baselines', Season.Id = varSeason.ID && Lower(Rep.Email
 
 **In the editor,** variables keep their last value until the formula runs again. **Run OnStart** (⋯ next to App) reloads the season but not btnLoad; btnLoad runs when Home opens, so Play, go to another screen and come back.
 
-**scrHome.OnVisible:** `Select(btnLoad)`
+**scrHome.OnVisible:** look up the season first, then load. On a phone the published app can show Home before App.OnStart has finished, and btnLoad then filters by an empty season (blank targets, "division by zero"); found on the live build, October 13, 2026. Keep the manager emails the same as in App.OnStart.
+
+```powerfx
+If(IsBlank(varSeason),
+    Set(varManagers, ["lynwood@ritebitefundraising.com"]);
+    Set(varIsManager, Lower(User().Email) in varManagers);
+    Set(varSeason, Coalesce(First(Filter(Seasons, 'Current Season' = true)), First(Sort(Seasons, 'Season Start', SortOrder.Descending))))
+);
+Select(btnLoad)
+```
 
 **Season dropdown** (`ddSeason`):
 - Items: `Sort(Seasons, 'Season Start', SortOrder.Descending)`
@@ -110,7 +119,7 @@ Set(varBase, LookUp('Rep Baselines', Season.Id = varSeason.ID && Lower(Rep.Email
 | Tile | Big number | Small line |
 |---|---|---|
 | Units | `Text(varUnits, "#,##0")` | `"of " & Text(varGoal, "#,##0") & " goal · " & Text((IfError(varUnits / varGoal, 0)) * 100, "0") & "%"` |
-| Sales calls | `varDirectDone & " / " & varDirectTarget` | `Max(0, varDirectTarget - varDirectDone) & " to go · about " & RoundUp(Max(0, varDirectTarget - varDirectDone) / varDaysLeft, 0) & " per selling day"` |
+| Sales calls | `varDirectDone & " / " & varDirectTarget` | `Max(0, varDirectTarget - varDirectDone) & " to go · about " & RoundUp(Max(0, varDirectTarget - varDirectDone) / Max(1, varDaysLeft), 0) & " per selling day"` |
 | Sales days | `varSalesDays & " / " & Coalesce(varSeason.'Sales Days Goal', 0)` | `"selling days logged"` |
 | New groups | `varBooked & " / " & RoundUp(varGroupsNeeded, 0)` | `"booked of needed this season"` |
 | Close rate (12 months) | `Text(varDirClose12 * 100, "0") & "%"` | `"plan " & Text(Value(First(colMyPlans).'Sales Call Close %') * 100, "0") & "%"` |
