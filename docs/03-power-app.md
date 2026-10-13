@@ -122,7 +122,9 @@ Select(btnLoad)
 
 > Power Apps' `Text()` does **not** turn `"0%"` into a percentage the way Excel does (it rounds the plain number), so every percentage below multiplies by 100 first. This was found on the live build in October 2026.
 
-**Header line:** `IfError(varSeason.Season & " · " & Text(varElapsed * 100, "0") & "% of the season gone", varSeason.Season)`
+**Header line:** `varSeason.Season & " plan · MFP as of " & If(IsBlank(varBase.'MFP As Of'), "not pulled yet", Text(varBase.'MFP As Of', "mmm d"))`
+
+Selling goes on all year. A season (Spring = Jan–Jun deliveries, Fall = Jul–Dec) only groups fundraisers by when they deliver, so there's no "% of the season gone" in the header (Lynwood, October 2026). Sales calls logged on any date count toward the season set as **Current Season**; switch it when you rebuild for the next season (June for Fall).
 
 **Tiles.** Add five tiles (a rectangle plus labels). The text formulas:
 
@@ -195,8 +197,6 @@ Set(varExisting, LookUp(colMyDays,
 If(
     dpDate.SelectedDate > Today(),
         Notify("You can't log a day in the future.", NotificationType.Error),
-    dpDate.SelectedDate < varSeason.'Season Start',
-        Notify("That date is before " & varSeason.Season & " started.", NotificationType.Error),
     IsBlank(txtDirect.Text),
         Notify("Enter your sales calls (0 is fine).", NotificationType.Error),
     IfError(

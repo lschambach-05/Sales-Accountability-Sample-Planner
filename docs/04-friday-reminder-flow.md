@@ -27,10 +27,8 @@ Reps should update their MFP units at least weekly, even in weeks they don't sel
    - Filter Query: `CurrentSeason eq 1`
    - Top Count: `1`
 
-3. **Condition: "Is a season running?"** Stop if there's no current season, or today falls outside it:
+3. **Condition: "Is a season set?"** Stop only if no season is ticked **Current Season**. Selling goes on all year, so there's no date window:
    - `length(body('Get_current_season')?['value'])` **is greater than** `0`
-   - **AND** `formatDateTime(utcNow(),'yyyy-MM-dd')` **is greater than or equal to** `formatDateTime(first(body('Get_current_season')?['value'])?['SeasonStart'],'yyyy-MM-dd')`
-   - **AND** `formatDateTime(utcNow(),'yyyy-MM-dd')` **is less than or equal to** `formatDateTime(addDays(first(body('Get_current_season')?['value'])?['SeasonStart'], mul(first(body('Get_current_season')?['value'])?['Weeks'], 7)),'yyyy-MM-dd')`
 
    Put everything below in the **If yes** branch.
 
