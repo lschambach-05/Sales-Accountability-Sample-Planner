@@ -269,47 +269,62 @@ Add a line for the close rate over the last 12 months:
 
 ## 6. scrTeam – Team (managers)
 
-**Gallery** `galTeam`, **Items**:
+Home's **Team** button: `Navigate(scrTeam)`, **Visible** `varIsManager`. Everything here comes from the manager collections btnLoad fills (colAllPlans, colAllDays, colAllYear, colReps).
 
-```powerfx
-Sort(
-    ForAll(colReps As r,
-        With({
-            p: Filter(colAllPlans, Lower('Created By'.Email) = Lower(r.Rep.Email)),
-            d: Sort(Filter(colAllDays, Lower('Created By'.Email) = Lower(r.Rep.Email)),
-                    'Activity Date', SortOrder.Descending),
-            y: Filter(colAllYear, Lower('Created By'.Email) = Lower(r.Rep.Email))
-        },
-        {
-            RepName:      r.'Rep Name',
-            Code:         r.'MFP Owning User Code',
-            Goal:         Sum(p, 'Sales Goal Units'),
-            Units:        Coalesce(First(Filter(d, !IsBlank('MFP Units Season-to-Date'))).'MFP Units Season-to-Date', 0),
-            CallsDone:    Sum(d, 'Sales Calls'),
-            CallsTarget:  Sum(p, 'Sales Calls Target'),
-            Booked:       Sum(d, 'New Groups'),
-            Needed:       RoundUp(Sum(p, 'Plan - New Groups Needed'), 0),
-            SalesDays:    Sum(d, 'Sales Day'),
-            LastDay:      First(d).'Activity Date',
-            Close12:      IfError(Sum(y, 'New Groups') / Sum(y, 'Sales Calls'), 0),
-            PlanClose:    First(p).'Sales Call Close %',
-            HasPlan:      CountRows(p) > 0
-        })
-    ),
-    IfError(Units / Goal, 0), SortOrder.Descending
-)
-```
+1. **lblTeamTitle** (X 20, Y 10, W 600, Size 18): `"Team · " & varSeason.Season`
+2. **lblTeamTotals** (X 20, Y 55, W 600, H 60):
 
-Labels in each row:
+   ```powerfx
+   "Units " & Text(Sum(galTeam.AllItems, Units), "#,##0") & " of " & Text(Sum(galTeam.AllItems, Goal), "#,##0") & Char(10) &
+   "Sales calls " & Sum(galTeam.AllItems, CallsDone) & " of " & Sum(galTeam.AllItems, CallsTarget)
+   ```
 
-- `ThisItem.RepName & " (" & ThisItem.Code & ")"`
-- `Text((IfError(ThisItem.Units / ThisItem.Goal, 0)) * 100, "0") & "%" & " of " & ThisItem.Goal & " units"`
-- `"Sales calls " & ThisItem.CallsDone & " / " & ThisItem.CallsTarget`
-- `"Groups " & ThisItem.Booked & " / " & ThisItem.Needed & " · " & ThisItem.SalesDays & " selling days · last " & If(IsBlank(ThisItem.LastDay), "never", Text(ThisItem.LastDay, "mmm d"))`
-- `"Close (12 mo) " & Text(ThisItem.Close12 * 100, "0") & "% · plan " & Text(Value(ThisItem.PlanClose) * 100, "0") & "%"`
-- A red "No plan yet" label with **Visible** `!ThisItem.HasPlan`
+3. **galTeam**: Insert → **Blank vertical gallery** (if you use a gallery with a layout, delete its Image, Title, Subtitle and NextArrow). X 20, Y 125, W 600, H 850, **TemplateSize** 190. **Items**:
 
-Team totals across the top: `Sum(galTeam.AllItems, Units)`, `Sum(galTeam.AllItems, Goal)`, and so on.
+   ```powerfx
+   Sort(
+       ForAll(colReps As r,
+           With({
+               p: Filter(colAllPlans, Lower('Created By'.Email) = Lower(r.Rep.Email)),
+               d: Sort(Filter(colAllDays, Lower('Created By'.Email) = Lower(r.Rep.Email)), 'Activity Date', SortOrder.Descending),
+               y: Filter(colAllYear, Lower('Created By'.Email) = Lower(r.Rep.Email))
+           },
+           {
+               RepName:     r.'Rep Name',
+               Code:        r.'MFP Owning User Code',
+               Goal:        Sum(p, 'Sales Goal Units') + 0,
+               Units:       First(Filter(d, !IsBlank('MFP Units Season-to-Date'))).'MFP Units Season-to-Date' + 0,
+               CallsDone:   Sum(d, 'Sales Calls') + 0,
+               CallsTarget: Sum(p, 'Sales Calls Target') + 0,
+               Booked:      Sum(d, 'New Groups') + 0,
+               Needed:      RoundUp(Sum(p, 'Plan - New Groups Needed') + 0, 0),
+               SalesDays:   Sum(d, 'Sales Day') + 0,
+               LastDay:     First(d).'Activity Date',
+               Close12:     IfError(Sum(y, 'New Groups') / Sum(y, 'Sales Calls'), 0),
+               PlanClose:   First(p).'Sales Call Close %',
+               HasPlan:     CountRows(p) > 0
+           })
+       ),
+       IfError(Units / Goal, 0), SortOrder.Descending
+   )
+   ```
+
+4. In the gallery row: **lblRepRow** (X 10, Y 5, W 560, H 175, Size 13):
+
+   ```powerfx
+   ThisItem.RepName & " (" & ThisItem.Code & ")" & Char(10) &
+   "Units " & Text(ThisItem.Units, "#,##0") & " of " & Text(ThisItem.Goal, "#,##0") & " (" & Text(IfError(ThisItem.Units / ThisItem.Goal, 0) * 100, "0") & "%)" & Char(10) &
+   "Sales calls " & ThisItem.CallsDone & " of " & ThisItem.CallsTarget & Char(10) &
+   "Groups " & ThisItem.Booked & " of " & ThisItem.Needed & " · " & ThisItem.SalesDays & " selling days · last " & If(IsBlank(ThisItem.LastDay), "never", Text(ThisItem.LastDay, "mmm d")) & Char(10) &
+   "Close (12 mo) " & Text(ThisItem.Close12 * 100, "0") & "% · plan " & Text(Value(ThisItem.PlanClose) * 100, "0") & "%"
+   ```
+
+   and **lblNoPlan** (X 420, Y 5, W 150): Text `"No plan yet"`, Color `Color.Red`, FontWeight `FontWeight.Bold`, **Visible** `!ThisItem.HasPlan`.
+5. **btnTeamBack** (X 20, Y 985, W 600, H 60): `Navigate(scrHome)`
+
+A rep shows up once they're in the **Reps** list with **Active** ticked; their numbers come from rows they created themselves.
+
+**Checked live (October 13, 2026), 2027 Spring:** one row, "Test – Lynwood as KJS", with 0 of 18,000 units, 0 of 490 sales calls, 0 of 41 groups and 17% close against a 9% plan; the totals line matched.
 
 ## 7. Publish and share
 
