@@ -51,3 +51,23 @@ def split_counted(rows):
             excluded.append((r, 'Open/closed with no units sold' if r['Status'] == 'Open' else 'Closed with no units')); continue
         counted.append(r)
     return counted, excluded
+
+def current_owners(rows, counted):
+    """Group ID -> the rep who owns the group now (Lynwood, October 2026: a group's whole history goes to its
+    current rep). Uses the pull's "Group Owner" column (MFP's current owner on the group record) when it names a
+    current rep; otherwise the placed groups in OWNER_OVERRIDES; otherwise the owner of the group's most recent
+    fundraiser, after the rollups. Returns (owners, description of the source used)."""
+    latest = {}
+    for r in counted or rows:
+        key = (r['Delivery Date'] or r['Start Date'], r['Fundraiser ID'])
+        if r['Group ID'] not in latest or key > latest[r['Group ID']][0]:
+            latest[r['Group ID']] = (key, r['Owning User'])
+    for r in rows:                     # groups with only canceled/unsold fundraisers still need an owner
+        latest.setdefault(r['Group ID'], ((r['Delivery Date'] or r['Start Date'], r['Fundraiser ID']), r['Owning User']))
+    group_owner = {r['Group ID']: r['Group Owner'] for r in rows if (r.get('Group Owner') or '').strip()}
+    def owner(g, last):
+        if g in group_owner and rep_of(group_owner[g]) != 'Unassigned':
+            return rep_of(group_owner[g])
+        return OWNER_OVERRIDES.get(g) or rep_of(last)
+    source = "the pull's Group Owner column" if group_owner else 'the most recent fundraiser in the pull'
+    return {g: owner(g, v[1]) for g, v in latest.items()}, source

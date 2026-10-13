@@ -133,6 +133,36 @@ Before a season, work out each rep's starting numbers from the pull and load the
 
 **Checked on the 2024–2025 pull** for 2026 Fall (Fall 2024 → Fall 2025), as a test: every Fall 2024 and Fall 2025 unit was credited to a current rep, and the per-rep units add up to the season totals (218,620 and 212,213). The groups moved from BPR to KJS count as KJS's, in both years. The per-rep numbers are in the CSV, kept with the pull in SharePoint, not in this repository.
 
+## Weekly MFP numbers (units to date and new groups)
+
+Reps only log **sales calls** in the app. Season-to-date units and new groups booked come from MFP once a week (Monday morning, before the manager digest), so they're never more than a week old. Home and Team show the date of the last pull.
+
+1. In a Claude-with-Chrome session, logged in to MFP, run the prompt above with these changes:
+   - **Date window:** deliveries from the start of the same season two years back to the end of the current season (for 2027 Spring: January 1, 2025 to June 30, 2027).
+   - **Extra column:** **Booked On**, the date the fundraiser was booked in MFP.
+   - Keep **Group Owner** (the group's current owning user).
+   - Save as `MFP progress YYYY-MM-DD.csv` in the same folder.
+2. Work out the numbers:
+
+   ```bash
+   python tools/build_rep_progress.py "MFP progress 2027-03-08.csv" "2027 Spring" 2027-03-08 "Rep Progress 2027 Spring.csv"
+   ```
+
+3. Load them (updates the rep's Rep Baselines row; nothing else changes):
+
+   ```powershell
+   ./tools/Import-RepProgress.ps1 -SiteUrl https://ritebitefundraising.sharepoint.com/sites/SalesPlanner -ClientId <client id> -CsvPath "Rep Progress 2027 Spring.csv"
+   ```
+
+| Column | Rule |
+|---|---|
+| MFP Units to Date | Units on the rep's fundraisers delivered in the current season (canceled left out) |
+| MFP New Groups | Groups booked for the current season that did not run in the same season last year |
+| MFP New Groups 12 Mo | New groups booked (by **Booked On**) in the 12 months up to the pull; the close rate is this ÷ sales calls logged in the same 12 months |
+| MFP As Of | The pull date |
+
+Each group counts for the rep who owns it **now**: the owner on the group's record in MFP. A booking counts once per group per season. An Open fundraiser with nothing sold more than 30 days after its delivery date doesn't count. Checked October 2026 against the Spring 2025–2026 pull (Spring 2026 as the season): units and new groups per rep matched the plan baseline exactly.
+
 ## Group locations (for placing unassigned groups)
 
 When a group's last owner is no longer a rep, the group goes to the **current rep with the most groups in the same city**, or failing that, the **same county** (Lynwood, Oct 2026). Ties, and groups with no match, are listed for Lynwood to decide. This needs each group's location, which the sales pull doesn't include. Paste this into the Claude-with-Chrome session:

@@ -421,6 +421,11 @@ Add-NumberField $RB 'BaseUnits'
 Add-NumberField $RB 'BaseGroups'
 Add-NumberField $RB 'RetainedUnits'
 Add-NumberField $RB 'RetainedGroups'
+# Weekly from MFP (tools/build_rep_progress.py + tools/Import-RepProgress.ps1): replaces what reps used to type
+Add-NumberField $RB 'MFPUnitsToDate'
+Add-NumberField $RB 'MFPNewGroups'
+Add-NumberField $RB 'MFPNewGroups12'
+Add-FieldXml $RB 'MFPAsOf' '<Field Type="DateTime" Name="MFPAsOf" StaticName="MFPAsOf" DisplayName="MFPAsOf" Format="DateOnly" />'
 Rename-Fields $RB @{
     Title             = 'Notes'
     RepUser           = 'Rep'
@@ -435,9 +440,14 @@ Rename-Fields $RB @{
     BaseGroups        = 'Base Season Groups'
     RetainedUnits     = 'Retained Units'
     RetainedGroups    = 'Retained Groups'
+    MFPUnitsToDate    = 'MFP Units to Date'
+    MFPNewGroups      = 'MFP New Groups'
+    MFPNewGroups12    = 'MFP New Groups 12 Mo'
+    MFPAsOf           = 'MFP As Of'
 }
 Set-PnPView -List $RB -Identity 'All Items' -Fields 'Season', 'RepCode', 'RepUser', 'PriorUnits', 'PriorGroups', 'AvgUnitsPerGroup',
-    'RetentionPct', 'GroupRetentionPct', 'BaseSeason', 'BaseUnits', 'BaseGroups', 'RetainedUnits', 'RetainedGroups' | Out-Null
+    'RetentionPct', 'GroupRetentionPct', 'BaseSeason', 'BaseUnits', 'BaseGroups', 'RetainedUnits', 'RetainedGroups',
+    'MFPUnitsToDate', 'MFPNewGroups', 'MFPNewGroups12', 'MFPAsOf' | Out-Null
 Set-RepsAccess $RB $null
 
 if (Get-PnPList -Identity 'Weekly Check-ins' -ErrorAction SilentlyContinue) {

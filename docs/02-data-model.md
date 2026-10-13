@@ -149,6 +149,7 @@ Each rep's starting numbers for a season, worked out from the MFP pull by `tools
 | Prior Year Units, Prior Year Groups, Avg Units per Group | Same season last year |
 | Unit Retention %, Group Retention % | Measured from the season two years back to last year (see Retention above) |
 | Retention Measured From, Base Season Units / Groups, Retained Units / Groups | The working, so the percentages can be checked |
+| MFP Units to Date, MFP New Groups, MFP New Groups 12 Mo, MFP As Of | Loaded weekly from MFP ([docs/05](05-mfp-yearly-pull.md#weekly-mfp-numbers-units-to-date-and-new-groups)). Home and Team use these instead of rep-typed units and bookings |
 
 ## Daily Activity (one row per rep × selling day)
 

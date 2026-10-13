@@ -19,7 +19,7 @@ The output CSV is what tools/Import-RepBaselines.ps1 loads into the Rep Baseline
 fractions (0.75 = 75%), the way SharePoint stores them.
 """
 import sys, csv, collections
-from mfp_rules import OWNER_OVERRIDES, rep_of, units, load, split_counted
+from mfp_rules import units, load, split_counted, current_owners
 
 SRC, TARGET, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
 year, half = TARGET.split()                      # planner names seasons "2027 Spring"
@@ -32,19 +32,7 @@ for s in (prior, base):
     if s not in seasons_in_pull:
         sys.exit(f'The pull has no {s} fundraisers. Pull {int(year) - 2}-{int(year) - 1} from MFP first.')
 
-# Current owner of each group
-latest = {}
-for r in counted:
-    key = (r['Delivery Date'] or r['Start Date'], r['Fundraiser ID'])
-    if r['Group ID'] not in latest or key > latest[r['Group ID']][0]:
-        latest[r['Group ID']] = (key, r['Owning User'])
-group_owner = {r['Group ID']: r['Group Owner'] for r in rows if (r.get('Group Owner') or '').strip()}
-source = 'the pull\'s Group Owner column' if group_owner else 'the most recent fundraiser in the pull'
-def current_owner(g, last_fundraiser_owner):
-    if g in group_owner and rep_of(group_owner[g]) != 'Unassigned':
-        return rep_of(group_owner[g])            # MFP's current owner on the group record
-    return OWNER_OVERRIDES.get(g) or rep_of(last_fundraiser_owner)
-owner = {g: current_owner(g, v[1]) for g, v in latest.items()}
+owner, source = current_owners(rows, counted)
 
 # units[(season, rep)][group] = units
 by = collections.defaultdict(lambda: collections.defaultdict(float))
