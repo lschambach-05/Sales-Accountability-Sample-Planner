@@ -176,4 +176,4 @@ Reps only log days they sell, so a week with no selling is simply a week with no
 - Remaining = target − done; per selling day left = remaining ÷ (Sales Days Goal − sales days so far)
 - Units to date and new groups = the weekly MFP pull (Rep Baselines: MFP Units to Date, MFP New Groups), compared with Sales Goal Units and New Groups Needed
 - Close rate = MFP new groups in this season and last ÷ sales calls logged over the **last 12 months**, compared with the plan's close rate. A rate falling short of plan means more calls are needed than the target says
-- Selling goes on all year; a season only groups fundraisers by delivery date. Calls can be logged on any past date and count toward the **Current Season**. The header shows how much of the season's delivery window is left (Season Start + Weeks) next to % of unit goal and new groups done, for reference; there's no week-by-week pace
+- Selling goes on all year; a season only groups fundraisers by delivery date. Calls can be logged on any past date and count toward the **Current Season**. There's no season countdown or week-by-week pace: selling slows around Easter and in June, when reps are delivering
