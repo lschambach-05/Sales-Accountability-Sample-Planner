@@ -174,7 +174,7 @@ Everything is by **delivery date** (the season a fundraiser runs in). MFP's "Boo
 | MFP New Groups Last 2 Seasons | New groups in the current season plus the one before, about a year of bookings. The close rate is this ÷ sales calls logged in the last 12 months |
 | MFP As Of | The pull date |
 
-Each group counts for the rep who owns it **now** (the owner on the group's record in MFP), once per season. An Open fundraiser with nothing sold more than 30 days after its delivery date doesn't count. Checked October 2026 with Spring 2026 as the season: units (112,124) and new groups per rep matched the plan baseline.
+Each group counts for the rep who owns it **now** (the owner on the group's record in MFP), once per season. A fundraiser counts as run or booked unless it's Canceled, Closed with no units, or Open with nothing sold more than 30 days after its delivery date, so a group booked for a season still under way already counts as running it (and isn't "new" the season after). Checked October 2026 with Spring 2026 as the season: units (112,124) and new groups per rep matched the plan baseline.
 
 ## Group locations (for placing unassigned groups)
 

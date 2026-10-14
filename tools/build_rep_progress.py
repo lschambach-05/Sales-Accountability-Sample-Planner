@@ -12,8 +12,10 @@ Rules (Lynwood, October 2026):
                           plus the season before - about a year of bookings. Divided by the sales calls reps logged in
                           the last 12 months, this is the close rate on Home and Team. The fundraiser's "Booked On" date
                           isn't used: groups often book a year ahead, so it doesn't show when the sale was won.
-  Each group counts for the rep who owns it now (mfp_rules.current_owners), once per season. An Open fundraiser with
-  nothing sold more than 30 days after its delivery date is treated as dead.
+  Each group counts for the rep who owns it now (mfp_rules.current_owners), once per season. A fundraiser counts as
+  run or booked unless it's Canceled, Closed with no units, or Open with nothing sold more than 30 days after its
+  delivery date. So a group booked for a season that's still under way (Open, nothing invoiced yet) already counts as
+  running that season, and isn't "new" next season.
 
 The pull must cover deliveries from the start of the season three seasons back to the end of the current season
 (for 2027 Spring: July 1, 2025 to June 30, 2027). The output CSV is what tools/Import-RepProgress.ps1 loads.
@@ -28,24 +30,29 @@ season = f'{half} {year}'                            # MFP name, "Spring 2027"
 last = seasons_before(season, 1)[0]                  # "Fall 2026"
 
 rows = load(*SRCS)
-counted, _ = split_counted(rows)                     # closed or invoiced: these "ran"
+counted, _ = split_counted(rows)
 owner, source = current_owners(rows, counted)
-ran = collections.defaultdict(set)
-for r in counted:
-    ran[r['Season']].add(r['Group ID'])
+
+def is_booking(r):
+    if r['Status'] == 'Canceled':
+        return False
+    if units(r) <= 0:
+        if r['Status'] == 'Closed':
+            return False
+        delivered = dt.date.fromisoformat(r['Delivery Date'][:10]) if r['Delivery Date'] else None
+        if delivered and (asof - delivered).days > 30:
+            return False
+    return True
+
+ran = collections.defaultdict(set)                   # season -> groups that ran or are booked to run
+for r in rows:
+    if is_booking(r):
+        ran[r['Season']].add(r['Group ID'])
 
 needed = seasons_before(season, 3)                   # history needed to judge "new" for this season and last
 missing = [s for s in needed if s not in ran]
 if missing:
     sys.exit(f'The pull has no fundraisers for {", ".join(missing)}. Widen the date window (see notes at the top).')
-
-def is_booking(r):
-    if r['Status'] == 'Canceled':
-        return False
-    delivered = dt.date.fromisoformat(r['Delivery Date'][:10]) if r['Delivery Date'] else None
-    if r['Status'] == 'Open' and units(r) <= 0 and delivered and (asof - delivered).days > 30:
-        return False
-    return True
 
 def is_new(g, s):
     return not any(g in ran[p] for p in seasons_before(s))
