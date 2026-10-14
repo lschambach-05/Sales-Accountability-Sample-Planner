@@ -139,10 +139,20 @@ Before a season, work out each rep's starting numbers from the pull and load the
 
 Reps only log **sales calls** in the app; Log a Day shows the MFP numbers but they can't be changed there. Season-to-date units and new groups booked come from MFP once a week (Monday morning, before the manager digest), so they're never more than a week old. Home, Log a Day and Team show the date of the last pull.
 
-1. In a Claude-with-Chrome session, logged in to MFP, run the prompt above with these changes:
-   - **Date window:** deliveries from the start of the season three seasons back to the end of the current season (for 2027 Spring: July 1, 2025 to June 30, 2027). Upcoming bookings with no delivery yet are included by start date, as usual.
-   - Keep **Group Owner** (the group's current owning user).
-   - Save as `MFP progress YYYY-MM-DD.csv` in the same folder.
+1. Log in to MFP in Chrome, then paste this into a Claude-with-Chrome session that has the planner folder connected (change the date in the file name):
+
+   > **Task: weekly export of fundraisers from My Fundraising Place, read-only.**
+   >
+   > I'm logged in to My Fundraising Place (app.myfundraisingplace.com) in Chrome. Pull every fundraiser, for all owning users and all statuses (including Open and upcoming bookings), with a delivery date from **July 1, 2025 to June 30, 2027**. This is read-only. Don't edit, reassign, save or submit anything in MFP. If any step would change data, stop and ask me.
+   >
+   > Use the same method as the October 8, 2026 pull (`MFP group sales Spring 2025-2026.csv` in the folder below): the Fundraisers grid (`/grid/Fundraisers`) for the list, Group ID and Group Name from the Invoices grid joined on FundraiserId, and `/api/fundraisers/{id}` for fundraisers with no invoice (most upcoming bookings won't have one yet). Leave out invoices with no fundraiser.
+   >
+   > One row per fundraiser, with the **same columns** as that file: Owning User, Group ID, **Group Owner** (the group's current owning user, from `/api/groups/{id}`), Group Name, Program (OLD/NEW labels combined), Event Name, Status, Fundraiser State, Start Date, Delivery Date (Central time), Season (Jan 1–Jun 30 = Spring, Jul 1–Dec 31 = Fall, by delivery date; if there's no delivery date use the start date and flag it), Units, Invoice $, Invoices, Fundraiser ID, Flags. Keep canceled fundraisers (Status = Canceled).
+   >
+   > Ask me before downloading. Save **only a CSV** named `MFP progress 2026-10-14.csv` to Rite Bite Claude Skills → Documents → Lynwood → Sales Accountibility Sample Planner. No Excel file is needed.
+   >
+   > **Tell me:** rows and units per season and status, whether every row has a Group ID and Group Owner, and how many rows were flagged and why.
+
 2. Work out the numbers:
 
    ```bash
