@@ -1,1 +1,12 @@
 __pycache__/
+
+# Sales data, settings, certificates and logs never go to GitHub (docs/06-nightly-mfp-export.md)
+*.csv
+*.xlsx
+*.log
+*.pfx
+*.cer
+config.json
+cache/
+exports/
+logs/

@@ -23,65 +23,83 @@ The pull must cover deliveries from the start of the season three seasons back t
 import sys, collections, csv, datetime as dt
 from mfp_rules import units, load, split_counted, current_owners, seasons_before
 
-TARGET, ASOF, OUT, SRCS = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
-asof = dt.date.fromisoformat(ASOF)
-year, half = TARGET.split()
-season = f'{half} {year}'                            # MFP name, "Spring 2027"
-last = seasons_before(season, 1)[0]                  # "Fall 2026"
+FIELDS = ['Season', 'Rep Code', 'MFP Units to Date', 'MFP New Groups', 'MFP New Groups 12 Mo', 'As Of']
 
-rows = load(*SRCS)
-counted, _ = split_counted(rows)
-owner, source = current_owners(rows, counted)
 
-def is_booking(r):
-    if r['Status'] == 'Canceled':
-        return False
-    if units(r) <= 0:
-        if r['Status'] == 'Closed':
+def progress(target, asof, rows):
+    """The rules above, for planner season `target` ("2027 Spring") as of `asof` (a date), over pull rows from
+    mfp_rules.load. Returns (one dict per rep with the FIELDS columns, the summary lines to print).
+    Also used by mfp_nightly.py. Raises ValueError when the pull is missing a season it needs."""
+    year, half = target.split()
+    season = f'{half} {year}'                        # MFP name, "Spring 2027"
+    last = seasons_before(season, 1)[0]              # "Fall 2026"
+
+    counted, _ = split_counted(rows)
+    owner, source = current_owners(rows, counted)
+
+    def is_booking(r):
+        if r['Status'] == 'Canceled':
             return False
-        delivered = dt.date.fromisoformat(r['Delivery Date'][:10]) if r['Delivery Date'] else None
-        if delivered and (asof - delivered).days > 30:
-            return False
-    return True
+        if units(r) <= 0:
+            if r['Status'] == 'Closed':
+                return False
+            delivered = dt.date.fromisoformat(r['Delivery Date'][:10]) if r['Delivery Date'] else None
+            if delivered and (asof - delivered).days > 30:
+                return False
+        return True
 
-ran = collections.defaultdict(set)                   # season -> groups that ran or are booked to run
-for r in rows:
-    if is_booking(r):
-        ran[r['Season']].add(r['Group ID'])
+    ran = collections.defaultdict(set)               # season -> groups that ran or are booked to run
+    for r in rows:
+        if is_booking(r):
+            ran[r['Season']].add(r['Group ID'])
 
-needed = seasons_before(season, 3)                   # history needed to judge "new" for this season and last
-missing = [s for s in needed if s not in ran]
-if missing:
-    sys.exit(f'The pull has no fundraisers for {", ".join(missing)}. Widen the date window (see notes at the top).')
+    needed = seasons_before(season, 3)               # history needed to judge "new" for this season and last
+    missing = [s for s in needed if s not in ran]
+    if missing:
+        raise ValueError(f'The pull has no fundraisers for {", ".join(missing)}. Widen the date window (see notes at the top).')
 
-def is_new(g, s):
-    return not any(g in ran[p] for p in seasons_before(s))
+    def is_new(g, s):
+        return not any(g in ran[p] for p in seasons_before(s))
 
-units_to_date = collections.Counter()
-new_season = collections.defaultdict(set)
-new_year = collections.defaultdict(set)
-for r in rows:
-    if not is_booking(r):
-        continue
-    g, rep, s = r['Group ID'], owner[r['Group ID']], r['Season']
-    if s == season:
-        units_to_date[rep] += units(r)
-        if is_new(g, s):
-            new_season[rep].add(g)
-    if s in (season, last) and is_new(g, s):
-        new_year[rep].add((g, s))
+    units_to_date = collections.Counter()
+    new_season = collections.defaultdict(set)
+    new_year = collections.defaultdict(set)
+    for r in rows:
+        if not is_booking(r):
+            continue
+        g, rep, s = r['Group ID'], owner[r['Group ID']], r['Season']
+        if s == season:
+            units_to_date[rep] += units(r)
+            if is_new(g, s):
+                new_season[rep].add(g)
+        if s in (season, last) and is_new(g, s):
+            new_year[rep].add((g, s))
 
-reps = sorted((set(units_to_date) | set(new_season) | set(new_year)) - {'Unassigned'})
-out = [{'Season': TARGET, 'Rep Code': rep, 'MFP Units to Date': round(units_to_date[rep]),
-        'MFP New Groups': len(new_season[rep]), 'MFP New Groups 12 Mo': len(new_year[rep]), 'As Of': ASOF}
-       for rep in reps]
-with open(OUT, 'w', newline='') as f:
-    w = csv.DictWriter(f, fieldnames=list(out[0])); w.writeheader(); w.writerows(out)
+    reps = sorted((set(units_to_date) | set(new_season) | set(new_year)) - {'Unassigned'})
+    out = [{'Season': target, 'Rep Code': rep, 'MFP Units to Date': round(units_to_date[rep]),
+            'MFP New Groups': len(new_season[rep]), 'MFP New Groups 12 Mo': len(new_year[rep]), 'As Of': asof.isoformat()}
+           for rep in reps]
 
-print(f'{TARGET} as of {ASOF}; new = not run in the two seasons before; 12-month count = {last} + {season}; '
-      f'groups credited to current owner from {source}')
-print(f"{'Rep':5}{'Units':>9}{'New grps':>10}{'New 12 mo':>11}")
-for r in out:
-    print(f"{r['Rep Code']:5}{r['MFP Units to Date']:>9,}{r['MFP New Groups']:>10}{r['MFP New Groups 12 Mo']:>11}")
-print(f"Season units, all reps: {sum(units_to_date[r] for r in reps):,.0f} "
-      f"(left out, groups whose owner isn't a current rep: {units_to_date['Unassigned']:,.0f})")
+    lines = [f'{target} as of {asof.isoformat()}; new = not run in the two seasons before; 12-month count = {last} + {season}; '
+             f'groups credited to current owner from {source}',
+             f"{'Rep':5}{'Units':>9}{'New grps':>10}{'New 12 mo':>11}"]
+    for r in out:
+        lines.append(f"{r['Rep Code']:5}{r['MFP Units to Date']:>9,}{r['MFP New Groups']:>10}{r['MFP New Groups 12 Mo']:>11}")
+    lines.append(f"Season units, all reps: {sum(units_to_date[r] for r in reps):,.0f} "
+                 f"(left out, groups whose owner isn't a current rep: {units_to_date['Unassigned']:,.0f})")
+    return out, lines
+
+
+def write_csv(out, path):
+    with open(path, 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS); w.writeheader(); w.writerows(out)
+
+
+if __name__ == '__main__':
+    TARGET, ASOF, OUT, SRCS = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+    try:
+        out, lines = progress(TARGET, dt.date.fromisoformat(ASOF), load(*SRCS))
+    except ValueError as e:
+        sys.exit(str(e))
+    write_csv(out, OUT)
+    print('\n'.join(lines))

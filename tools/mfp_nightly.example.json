@@ -1,0 +1,93 @@
+{
+  "_read_me": "Settings for tools/mfp_nightly.py. Copy with 'py tools/mfp_nightly.py init' (it goes to %LOCALAPPDATA%\\RiteBite\\MFP Nightly\\config.json, outside the repository) and fill in every FILL IN. The mfp section comes from 'MFP technical notes.txt'; 'py tools/mfp_nightly.py probe' shows what MFP actually sends so you can check it. No password goes in this file. Keys starting with _ are notes and are ignored.",
+
+  "mfp_username": "FILL IN: the MFP login used for the nightly run",
+  "keyring_service": "RiteBite MFP Nightly",
+  "data_dir": "",
+  "pwsh": "pwsh",
+  "probe_season": "2027 Spring",
+
+  "sharepoint": {
+    "tenant": "ritebitefundraising.onmicrosoft.com",
+    "client_id": "FILL IN: Application (client) ID of the nightly app registration",
+    "thumbprint": "FILL IN: certificate thumbprint",
+    "planner_site": "https://ritebitefundraising.sharepoint.com/sites/SalesPlanner",
+    "records_site": "https://ritebitefundraising.sharepoint.com/sites/RiteBiteClaudeSkills",
+    "records_folder": "Shared Documents/Lynwood/Sales Accountibility Sample Planner/Nightly",
+    "alert_from": "lynwood@ritebitefundraising.com",
+    "alert_to": "lynwood@ritebitefundraising.com"
+  },
+
+  "mfp": {
+    "base_url": "https://app.myfundraisingplace.com",
+    "request_delay_seconds": 0.25,
+    "timeout_seconds": 60,
+    "invoice_window_pad_days": 183,
+    "_dates_without_offset_are": "How MFP's times with no time zone should be read: UTC, or America/Chicago. Check against a delivery date you know.",
+    "dates_without_offset_are": "UTC",
+
+    "login": {
+      "page_path": "FILL IN: path of the login page, e.g. /Account/Login",
+      "post_path": "FILL IN: path the login form posts to",
+      "username_field": "FILL IN: name of the username/email input",
+      "password_field": "FILL IN: name of the password input",
+      "_token_field": "Hidden anti-forgery field on the login form, if any (ASP.NET sites usually have __RequestVerificationToken). Leave empty if none.",
+      "token_field": "FILL IN: or empty",
+      "extra_fields": {},
+      "failed_if_url_contains": ""
+    },
+
+    "_grids": "Placeholders in params: {page} (1, 2, ...), {page_index} (0, 1, ...), {page_size}, {skip}, {date_from}, {date_to} (written with date_format). send_as: query (in the address, GET), form or json (POST body). Field names may use dots for nested values, e.g. Group.Id. An empty field name means MFP doesn't have it.",
+    "grids": {
+      "fundraisers": {
+        "path": "/grid/Fundraisers",
+        "method": "FILL IN: GET or POST",
+        "send_as": "FILL IN: query, form or json",
+        "page_size": 50,
+        "date_format": "FILL IN: e.g. %m/%d/%Y",
+        "params": "FILL IN: replace this text with an object of the paging, all-owners, all-statuses and delivery-date filter parameters from the notes, e.g. {\"page\": \"{page}\", \"pageSize\": \"{page_size}\"}",
+        "rows_key": "FILL IN: e.g. Data",
+        "total_key": "FILL IN: e.g. Total",
+        "fields": {
+          "id": "FILL IN: fundraiser ID",
+          "owning_user": "FILL IN: owning user code (BPR, KJS, ...)",
+          "program": "FILL IN",
+          "event_name": "FILL IN",
+          "status": "FILL IN: Open / Closed / Canceled",
+          "state": "FILL IN: Paid, Booked, ...",
+          "start_date": "FILL IN",
+          "units": "FILL IN: Total Items"
+        }
+      },
+      "invoices": {
+        "path": "/grid/Invoices",
+        "method": "FILL IN: GET or POST",
+        "send_as": "FILL IN: query, form or json",
+        "page_size": 50,
+        "date_format": "FILL IN: e.g. %m/%d/%Y",
+        "params": "FILL IN: same idea as the fundraisers list",
+        "rows_key": "FILL IN: e.g. Data",
+        "total_key": "FILL IN: e.g. Total",
+        "fields": {
+          "fundraiser_id": "FundraiserId",
+          "group_id": "GroupId",
+          "group_name": "FILL IN",
+          "owning_user": "FILL IN: invoice owning user code",
+          "delivered_on": "DeliveredOn",
+          "is_primary": "IsPrimary",
+          "amount": "FILL IN: Invoice Amount",
+          "units": ""
+        }
+      }
+    },
+
+    "fundraiser_record": {
+      "path": "/api/fundraisers/{id}",
+      "fields": {"group_id": "FILL IN: e.g. Group.Id", "group_name": "FILL IN: e.g. Group.Name", "delivered_on": "DeliveredOn"}
+    },
+    "group_record": {
+      "path": "/api/groups/{id}",
+      "fields": {"owner": "FILL IN: the group's current owning user code"}
+    }
+  }
+}

@@ -36,7 +36,7 @@ No new software to buy or host. It uses SharePoint Lists, Power Apps and Power A
 | 3 | [Build the Power App](docs/03-power-app.md) | ½–1 day |
 | 4 | [Weekly emails](docs/04-friday-reminder-flow.md) | 1 hour |
 | 5 | [Yearly MFP pull](docs/05-mfp-yearly-pull.md) (prior-year and retention numbers, via Claude in Chrome) | under 1 hour (estimate) |
-| 6 | [Nightly MFP export](docs/06-nightly-mfp-export.md) (planned: replaces the weekly Chrome pull) | not built yet |
+| 6 | [Nightly MFP export](docs/06-nightly-mfp-export.md) (replaces the weekly Chrome pull; built, not yet run against MFP) | about 2 hours to set up (estimate) |
 
 Times are estimates, not measurements.
 

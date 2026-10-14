@@ -8,6 +8,9 @@
     before the season; if a rep has no row yet, one is created here with the same per-row permissions
     (managers Full Control, that rep Read). Only the four MFP columns are changed on existing rows.
 
+    With -Tenant and -Thumbprint it signs in as the app with a certificate instead of as you (no browser), which
+    is how tools/mfp_nightly.py runs it each night (docs/06-nightly-mfp-export.md).
+
 .EXAMPLE
     ./tools/Import-RepProgress.ps1 `
         -SiteUrl  https://ritebitefundraising.sharepoint.com/sites/SalesPlanner `
@@ -17,14 +20,21 @@
 param(
     [Parameter(Mandatory)] [string] $SiteUrl,
     [Parameter(Mandatory)] [string] $ClientId,
-    [Parameter(Mandatory)] [string] $CsvPath
+    [Parameter(Mandatory)] [string] $CsvPath,
+    [string] $Tenant,       # e.g. ritebitefundraising.onmicrosoft.com; with -Thumbprint, for unattended runs
+    [string] $Thumbprint    # certificate in Cert:\CurrentUser\My
 )
 
 $ErrorActionPreference = 'Stop'
 $List = 'Rep Baselines'
 $ManagersGroup = 'Sales Planner Managers'
 
-Connect-PnPOnline -Url $SiteUrl -ClientId $ClientId -Interactive
+if ($Thumbprint) {
+    Connect-PnPOnline -Url $SiteUrl -ClientId $ClientId -Tenant $Tenant -Thumbprint $Thumbprint
+}
+else {
+    Connect-PnPOnline -Url $SiteUrl -ClientId $ClientId -Interactive
+}
 
 $rows = @(Import-Csv -Path $CsvPath)
 if (-not $rows) { throw "No rows in $CsvPath" }

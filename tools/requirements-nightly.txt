@@ -1,0 +1,4 @@
+# For tools/mfp_nightly.py:  py -m pip install -r tools\requirements-nightly.txt
+requests>=2.31
+keyring>=24
+tzdata          # time-zone data for Central time on Windows
