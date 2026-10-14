@@ -159,11 +159,17 @@ Reps only log **sales calls** in the app; Log a Day shows the MFP numbers but th
    python tools/build_rep_progress.py "2027 Spring" 2027-03-08 "Rep Progress 2027 Spring.csv" "MFP progress 2027-03-08.csv"
    ```
 
-3. Load them (updates only the MFP columns on each rep's Rep Baselines row):
+3. Load them (updates only the MFP columns on each rep's Rep Baselines row). With `Import-RepProgress.ps1` (from `tools/` on GitHub) and the progress CSV both in Downloads, in PowerShell 7 (this picks the newest copy of each, so a browser's " (1)" doesn't matter):
 
    ```powershell
-   ./tools/Import-RepProgress.ps1 -SiteUrl https://ritebitefundraising.sharepoint.com/sites/SalesPlanner -ClientId <client id> -CsvPath "Rep Progress 2027 Spring.csv"
+   $script = Get-ChildItem "$HOME\Downloads\Import-RepProgress*.ps1" | Sort-Object LastWriteTime | Select-Object -Last 1
+   $csv = Get-ChildItem "$HOME\Downloads\Rep Progress 2027 Spring*.csv" | Sort-Object LastWriteTime | Select-Object -Last 1
+   $script.FullName; $csv.FullName
+   Unblock-File $script.FullName
+   & $script.FullName -SiteUrl https://ritebitefundraising.sharepoint.com/sites/SalesPlanner -ClientId <client id> -CsvPath $csv.FullName
    ```
+
+   First run, October 14, 2026 (pull of July 2025 – June 2027 deliveries, 1,866 fundraisers): loaded for the test rep; the others are skipped until they're in the Reps list.
 
 Everything is by **delivery date** (the season a fundraiser runs in). MFP's "Booked On" date isn't used: groups often book a year ahead, so it doesn't show when the sale was won (Lynwood, October 2026).
 
