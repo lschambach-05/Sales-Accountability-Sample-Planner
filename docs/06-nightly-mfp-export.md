@@ -13,14 +13,14 @@
    - `/api/fundraisers/{id}` for fundraisers with no invoice (most upcoming bookings);
    - `/api/groups/{id}` for each group's **current owner**. Cache owners between runs so a normal night only looks up new groups.
    - Request formats, field names and the login form are documented in `MFP technical notes.txt` in the SharePoint folder below, written by the Chrome session. They're not public API, so MFP can change them; fail loudly when a response doesn't look as expected.
-3. **Build the same CSV** as the weekly pull (columns: Owning User, Group ID, Group Owner, Group Name, Program, Event Name, Status, Fundraiser State, Start Date, Delivery Date, Season, Units, Invoice $, Invoices, Fundraiser ID, Flags), with the season by delivery date in Central time (Jan 1–Jun 30 = Spring, Jul 1–Dec 31 = Fall; no delivery date → start date, flagged). See the prompt in [05-mfp-pull.md](05-mfp-yearly-pull.md#weekly-mfp-numbers-units-to-date-and-new-groups).
+3. **Build the same CSV** as the weekly pull (columns: Owning User, Group ID, Group Owner, Group Name, Program, Event Name, Status, Fundraiser State, Start Date, Delivery Date, Season, Units, Invoice $, Invoices, Fundraiser ID, Flags), with the season by delivery date in Central time (Jan 1–Jun 30 = Spring, Jul 1–Dec 31 = Fall; no delivery date → start date, flagged). See the prompt in [05-mfp-yearly-pull.md](05-mfp-yearly-pull.md#weekly-mfp-numbers-units-to-date-and-new-groups).
 4. **Run the existing calculation**: reuse `tools/build_rep_progress.py` / `tools/mfp_rules.py` (import them; don't reimplement the rules). The planner season is the Seasons list row ticked **Current Season**.
 5. **Update Rep Baselines** the way `tools/Import-RepProgress.ps1` does (MFPUnitsToDate, MFPNewGroups, MFPNewGroups12, MFPAsOf on each rep's row for the season, matched by MFP code via the Reps list; new rows get per-item permissions: Sales Planner Managers Full Control + that rep Read). Unattended, so app-only auth with a certificate on the existing Sales Planner app registration (or calling the PowerShell script with certificate parameters).
 6. **Save the day's CSV** to the SharePoint folder for the record, and **email Lynwood** if any step fails, so the numbers never go quietly stale.
 
 ## Checks before it runs unattended
 
-- Output for 2027 Spring as of 2026-10-14 must match the manual run: BPR 0/2/25, JK 0/2/21, JMK 0/3/22, KJP 0/0/4, KJS 0/2/15, RB 0/3/14 (units / new groups / new groups last 2 seasons), and the season totals of the October 14 pull (Fall 2025 212,213 units; Spring 2026 112,124).
+- Run on the October 14, 2026 pull (`MFP progress 2026-10-14.csv` in SharePoint), the output must match the manual run's `Rep Progress 2027 Spring.csv` (Lynwood has it; per-rep numbers are kept out of this repository), and the season totals must match the pull (Fall 2025 212,213 units; Spring 2026 112,124).
 - Read-only in MFP: GET/list requests only, apart from the login.
 - No sales data in the repository: CSVs, caches and logs go to the local machine or SharePoint, not GitHub.
 
